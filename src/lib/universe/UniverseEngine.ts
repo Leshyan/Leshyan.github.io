@@ -365,8 +365,8 @@ export class UniverseEngine {
     this.intro.updateBigBang(deltaSeconds, progress);
 
     const reveal = smoothstep(0.08, 0.78, progress);
-    const backgroundReveal = smoothstep(0.22, 0.9, progress);
-    const explosionOpacity = 1 - smoothstep(0.52, 1, progress);
+    const backgroundReveal = smoothstep(0.22, 0.8, progress);
+    const explosionOpacity = 1 - smoothstep(0.42, 0.82, progress);
     this.intro.setOpacity(explosionOpacity);
     this.background.setOpacity(backgroundReveal * 0.72);
     this.nebulae.setOpacity(reveal * 0.84);
@@ -374,10 +374,12 @@ export class UniverseEngine {
     this.camera.position.z = THREE.MathUtils.lerp(
       UNIVERSE_CONFIG.camera.coverZ,
       UNIVERSE_CONFIG.camera.cosmosZ,
-      smoothstep(0.12, 0.9, progress),
+      smoothstep(0.12, 0.82, progress),
     );
 
-    if (progress >= 1) {
+    if (progress >= 0.82) {
+      // Formation and the explosion fade are both complete here; switching now
+      // avoids ~0.6s of dead time before the article index can start fading in.
       this.stateMachine.transition('cosmos');
       this.enterCosmosAfterBigBang();
     }

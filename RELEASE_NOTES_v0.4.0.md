@@ -37,3 +37,10 @@ Flying toward an article star drove every galaxy sprite into its point-size cap 
 
 - Point-size cap lowered to 26px and the uncapped size is now passed to the fragment shader (`vSizePx`).
 - Sprites above ~12px get deterministic hash-grain ("micro-star" sparkle) modulated into their alpha, so capped sprites resolve into clumps of fine stars instead of smooth discs; brightness is compensated to keep the galaxy's overall luminance.
+
+## v0.4.3 patch — tighter Big Bang → index handoff
+
+Galaxy formation completed at 78% of the Big Bang window, but the cosmos switch (and therefore the article index fade-in) waited for 100% — about 0.6s of dead time plus a 0.6s CSS fade (~1.2s of perceived wait after the nebulae had already settled).
+
+- Explosion-spark fade now completes by 82% and the camera push-in by 82%, so the cosmos switch happens at 82% of the window with no visual pop.
+- Index fade-in tightened (0.6s -> 0.45s opacity, 0.9s -> 0.7s transform).
