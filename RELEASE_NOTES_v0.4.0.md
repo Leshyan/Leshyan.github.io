@@ -22,3 +22,11 @@ The index is the only navigation surface, so the v0.3 dead-end states (tap into 
 ## Verification
 
 `npm run verify` (offline audit + syntax scan + core tests + `astro check` + production build) passes; headless-Chromium smoke covers cover → Big Bang → index → article → reverse return → Back/Forward on desktop and mobile viewports.
+
+## v0.4.1 patch — navigation latency
+
+Measured on the deployed site: clicking an article card took ~1.8s before the article rendered — the document fetch started only after the 1s entry animation finished (serialized loader), then waited the full Pages RTT (~730ms).
+
+- The navigation loader now starts the document fetch immediately and awaits it **in parallel with** the entry/return animation; the network wait hides inside the animation window.
+- Astro `prefetch: { prefetchAll: true, defaultStrategy: 'viewport' }` warms the HTTP cache for all article pages (and the home back-link) while the reader is on the index, so the concurrent fetch usually resolves from cache.
+- Result: article renders when the fly-in ends (~1.05–1.1s), independent of network latency.

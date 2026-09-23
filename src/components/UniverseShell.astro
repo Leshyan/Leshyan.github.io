@@ -143,9 +143,12 @@ const indexGroups = NEBULAE
         const slug = slugFromPath(event.to.pathname);
         if (!slug) return;
         event.loader = async () => {
+          // Fetch concurrently with the fly-in so the network wait hides inside the animation.
+          const loading = originalLoader();
+          loading.catch(() => {});
           try {
             await engine.prepareEntry(slug);
-            await originalLoader();
+            await loading;
           } catch (error) {
             engine.recoverNavigationFailure(fromRoute, fromSlug);
             throw error;
@@ -156,9 +159,12 @@ const indexGroups = NEBULAE
 
       if (fromPost && !toPost) {
         event.loader = async () => {
+          // Same overlap for the return: home document loads during the reverse animation.
+          const loading = originalLoader();
+          loading.catch(() => {});
           try {
             await engine.prepareReturn(fromSlug);
-            await originalLoader();
+            await loading;
           } catch (error) {
             engine.recoverNavigationFailure(fromRoute, fromSlug);
             throw error;
