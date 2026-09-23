@@ -5,9 +5,8 @@ import { clamp01, easeInOutCubic, smoothstep } from './core/math';
 import { UniverseStateMachine, type UniverseState } from './core/UniverseStateMachine';
 import { createGlowTexture } from './render/materials';
 import { ArticleBurstSystem } from './systems/ArticleBurstSystem';
-import { ArticleStarSystem, type ArticleFocusResult, type ArticleStarRuntime } from './systems/ArticleStarSystem';
+import { ArticleStarSystem, type ArticleStarRuntime } from './systems/ArticleStarSystem';
 import { BackgroundStarField } from './systems/BackgroundStarField';
-import { FlightController } from './systems/FlightController';
 import { IntroStarField } from './systems/IntroStarField';
 import { NebulaSystem } from './systems/NebulaSystem';
 import { UniverseHud } from './ui/UniverseHud';
@@ -23,7 +22,6 @@ export interface UniverseEngineOptions {
   content: UniverseContent;
   initialRoute: UniverseRoute;
   initialSlug: string | null;
-  onRequestPost: (slug: string) => void;
 }
 
 interface CameraTransition {
@@ -52,9 +50,7 @@ export class UniverseEngine {
   private readonly nebulae: NebulaSystem;
   private readonly articleStars: ArticleStarSystem;
   private readonly burst: ArticleBurstSystem;
-  private readonly flight: FlightController;
   private readonly hud: UniverseHud;
-  private readonly onRequestPost: (slug: string) => void;
 
   private readonly mouseNdc = new THREE.Vector2();
   private readonly mouseWorld = new THREE.Vector3();
@@ -68,7 +64,6 @@ export class UniverseEngine {
   private contextLost = false;
   private route: UniverseRoute;
   private currentSlug: string | null;
-  private focused: ArticleFocusResult | null = null;
   private selectedStar: ArticleStarRuntime | null = null;
   private cameraTransition: CameraTransition | null = null;
   private entryPromise: Promise<void> | null = null;
@@ -77,12 +72,16 @@ export class UniverseEngine {
   private returnResolve: (() => void) | null = null;
   private returnReady = false;
   private selectedStarIntegrity = 1;
+  private readonly cosmosIdle = {
+    position: new THREE.Vector3(),
+    quaternion: new THREE.Quaternion(),
+    active: false,
+  };
 
   constructor(shell: HTMLElement, options: UniverseEngineOptions) {
     const canvas = shell.querySelector<HTMLCanvasElement>('#universe-canvas');
     if (!canvas) throw new Error('Universe canvas not found.');
     this.canvas = canvas;
-    this.onRequestPost = options.onRequestPost;
     this.route = options.initialRoute;
     this.currentSlug = options.initialSlug;
     this.reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
@@ -107,7 +106,6 @@ export class UniverseEngine {
     this.nebulae = new NebulaSystem(this.scene, options.content.nebulae, pixelRatio, this.reducedMotion);
     this.articleStars = new ArticleStarSystem(this.scene, options.content.articleStars, options.content.nebulae, this.glowTexture);
     this.burst = new ArticleBurstSystem(this.scene, pixelRatio, this.reducedMotion);
-    this.flight = new FlightController(this.camera, this.canvas);
     this.hud = new UniverseHud(shell);
 
     this.attachEvents();
@@ -158,9 +156,6 @@ export class UniverseEngine {
     this.currentSlug = slug;
     this.selectedStar = star;
     this.selectedStarIntegrity = 1;
-    this.focused = null;
-    this.hud.hideArticle();
-    this.flight.setEnabled(false);
     this.cameraTransition = this.createCameraTransition(star, true);
     this.burst.configure(star.def.slug, star.world, star.def.theme);
     this.burst.setProgress(0);
@@ -192,7 +187,6 @@ export class UniverseEngine {
     this.applyCameraProgress(1);
     this.burst.configure(star.def.slug, star.world, star.def.theme);
     this.burst.setProgress(1);
-    this.flight.setEnabled(false);
 
     if (this.state !== 'article') this.stateMachine.force('article');
     this.stateMachine.transition('article-return');
@@ -224,7 +218,6 @@ export class UniverseEngine {
     this.nebulae.setOpacity(0.42);
     this.intro.setOpacity(0);
     this.intro.setCursorOpacity(0);
-    this.flight.setEnabled(false);
     this.burst.cleanup();
     this.returnReady = false;
     this.resolveEntry();
@@ -240,7 +233,6 @@ export class UniverseEngine {
     this.canvas.removeEventListener('click', this.onCanvasClick);
     this.canvas.removeEventListener('webglcontextlost', this.onContextLost);
     this.canvas.removeEventListener('webglcontextrestored', this.onContextRestored);
-    this.flight.dispose();
     this.intro.dispose();
     this.background.dispose();
     this.nebulae.dispose();
@@ -282,32 +274,18 @@ export class UniverseEngine {
     this.updatePointerWorld(event.clientX, event.clientY);
   };
 
+  // Cosmos-state canvas clicks are intentionally inert: the article index owns navigation.
   private onCanvasClick = (event: MouseEvent) => {
-    if (this.route === 'post') return;
+    if (this.route === 'post' || this.state !== 'cover') return;
 
-    if (this.state === 'cover') {
-      this.pointerScreen.set(event.clientX, event.clientY);
-      this.hud.setPointerPosition(event.clientX, event.clientY);
-      this.updatePointerWorld(event.clientX, event.clientY);
-      this.pointerMoved = true;
-      this.intro.setPointer(this.mouseWorld, true);
-      this.intro.beginCollapse(this.mouseWorld);
-      this.stateMachine.transition('collapse');
-      this.syncStateVisuals();
-      return;
-    }
-
-    if (this.state !== 'cosmos') return;
-    if (
-      this.flight.isPointerLocked
-      && this.focused
-      && this.focused.screenDistance < UNIVERSE_CONFIG.focus.articleEnterRadius
-      && this.focused.worldDistance < UNIVERSE_CONFIG.focus.articleEnterWorldMax
-    ) {
-      this.onRequestPost(this.focused.star.def.slug);
-      return;
-    }
-    if (!this.flight.isPointerLocked) this.flight.requestPointerLock();
+    this.pointerScreen.set(event.clientX, event.clientY);
+    this.hud.setPointerPosition(event.clientX, event.clientY);
+    this.updatePointerWorld(event.clientX, event.clientY);
+    this.pointerMoved = true;
+    this.intro.setPointer(this.mouseWorld, true);
+    this.intro.beginCollapse(this.mouseWorld);
+    this.stateMachine.transition('collapse');
+    this.syncStateVisuals();
   };
 
   private onContextLost = (event: Event) => {
@@ -361,8 +339,6 @@ export class UniverseEngine {
     this.hud.setCursorGlowOpacity(this.pointerMoved ? 0.28 + gathered * 0.36 : 0.08);
     this.background.setOpacity(0);
     this.nebulae.setOpacity(0);
-    this.flight.setEnabled(false);
-    this.hud.setFlightStatus(false, false);
   }
 
   private updateCollapse() {
@@ -407,17 +383,27 @@ export class UniverseEngine {
     }
   }
 
-  private updateCosmos(deltaSeconds: number) {
+  private updateCosmos(_deltaSeconds: number) {
     this.intro.setOpacity(0);
     this.intro.setCursorOpacity(0);
     this.background.setOpacity(0.72);
     this.nebulae.setFormation(1);
     this.nebulae.setOpacity(0.82);
-    this.flight.setEnabled(true);
-    this.flight.update(deltaSeconds);
-    this.hud.setFlightStatus(true, this.flight.isPointerLocked);
-    this.updateArticleFocus();
-    this.updateNearestNebula();
+    this.updateCosmosIdle();
+  }
+
+  // Deterministic idle sway keeps the nebula field alive behind the article index.
+  private updateCosmosIdle() {
+    if (!this.cosmosIdle.active) return;
+    const t = this.globalElapsed;
+    this.camera.position.set(
+      this.cosmosIdle.position.x + Math.sin(t * 0.07) * 0.35,
+      this.cosmosIdle.position.y + Math.sin(t * 0.09) * 0.3,
+      this.cosmosIdle.position.z,
+    );
+    this.camera.quaternion.copy(this.cosmosIdle.quaternion);
+    this.camera.rotateY(Math.sin(t * 0.11) * 0.012);
+    this.camera.rotateX(Math.sin(t * 0.08) * 0.008);
   }
 
   private updateArticleEnter() {
@@ -437,9 +423,6 @@ export class UniverseEngine {
     this.burst.setProgress(progress);
     this.background.setOpacity(THREE.MathUtils.lerp(0.72, 0.34, progress));
     this.nebulae.setOpacity(THREE.MathUtils.lerp(0.82, 0.42, progress));
-    this.hud.hideArticle();
-    this.hud.hideNebula();
-    this.hud.setFlightStatus(false, false);
 
     if (t >= 1) {
       this.applyCameraProgress(1);
@@ -451,13 +434,9 @@ export class UniverseEngine {
 
   private updateArticle() {
     this.selectedStarIntegrity = 0;
-    this.flight.setEnabled(false);
     this.background.setOpacity(0.34);
     this.nebulae.setFormation(1);
     this.nebulae.setOpacity(0.42);
-    this.hud.hideArticle();
-    this.hud.hideNebula();
-    this.hud.setFlightStatus(false, false);
   }
 
   private updateArticleReturn() {
@@ -482,7 +461,6 @@ export class UniverseEngine {
     this.burst.setProgress(entryProgress);
     this.background.setOpacity(THREE.MathUtils.lerp(0.72, 0.34, entryProgress));
     this.nebulae.setOpacity(THREE.MathUtils.lerp(0.82, 0.42, entryProgress));
-    this.hud.setFlightStatus(false, false);
 
     if (t >= 1 && !this.returnReady) {
       // Never expose cosmos while the old article DOM is still mounted.
@@ -494,51 +472,6 @@ export class UniverseEngine {
     }
   }
 
-  private updateArticleFocus() {
-    this.focused = this.articleStars.getFocusCandidate(this.camera);
-    if (!this.focused) {
-      this.hud.hideArticle();
-      return;
-    }
-
-    const centerFactor = 1 - smoothstep(0.045, UNIVERSE_CONFIG.focus.articleLabelRadius, this.focused.screenDistance);
-    const nearFactor = 1 - smoothstep(25, UNIVERSE_CONFIG.focus.articleWorldMax, this.focused.worldDistance);
-    const opacity = clamp01(0.13 + centerFactor * 0.82) * nearFactor;
-    const centered = this.focused.screenDistance < UNIVERSE_CONFIG.focus.articleEnterRadius;
-    const closeEnough = this.focused.worldDistance < UNIVERSE_CONFIG.focus.articleEnterWorldMax;
-    const hint = !this.flight.isPointerLocked
-      ? 'click to capture view'
-      : !closeEnough
-        ? 'move closer'
-        : !centered
-          ? 'center the star'
-          : 'click to enter';
-    this.hud.showArticle({
-      theme: this.focused.star.def.theme,
-      title: this.focused.star.def.title,
-      subtitle: this.focused.star.def.subtitle,
-      opacity,
-      hint,
-    });
-  }
-
-  private updateNearestNebula() {
-    const nearest = this.nebulae.findNearest(this.camera.position);
-    if (!nearest || nearest.distance > UNIVERSE_CONFIG.focus.nebulaLabelFar) {
-      this.hud.hideNebula();
-      return;
-    }
-    this.hud.showNebula({
-      title: nearest.definition.title,
-      subtitle: nearest.definition.subtitle,
-      opacity: 1 - smoothstep(
-        UNIVERSE_CONFIG.focus.nebulaLabelNear,
-        UNIVERSE_CONFIG.focus.nebulaLabelFar,
-        nearest.distance,
-      ),
-    });
-  }
-
   private enterCosmosAfterBigBang() {
     this.intro.setOpacity(0);
     this.intro.setCursorOpacity(0);
@@ -546,8 +479,7 @@ export class UniverseEngine {
     this.nebulae.setFormation(1);
     this.nebulae.setOpacity(0.82);
     this.camera.position.z = UNIVERSE_CONFIG.camera.cosmosZ;
-    this.flight.syncFromCamera();
-    this.flight.setEnabled(true);
+    this.captureCosmosIdle();
     this.syncStateVisuals();
   }
 
@@ -566,12 +498,10 @@ export class UniverseEngine {
       this.camera.position.set(0, 0, UNIVERSE_CONFIG.camera.cosmosZ);
       this.camera.lookAt(0, 0, -30);
     }
-    this.flight.syncFromCamera();
-    this.flight.setEnabled(true);
+    this.captureCosmosIdle();
     this.burst.cleanup();
     this.selectedStar = null;
     this.currentSlug = null;
-    this.focused = null;
     this.cameraTransition = null;
     this.returnReady = false;
     this.selectedStarIntegrity = 1;
@@ -599,8 +529,13 @@ export class UniverseEngine {
     this.nebulae.setOpacity(0.42);
     this.intro.setOpacity(0);
     this.intro.setCursorOpacity(0);
-    this.flight.setEnabled(false);
     this.syncStateVisuals();
+  }
+
+  private captureCosmosIdle() {
+    this.cosmosIdle.position.copy(this.camera.position);
+    this.cosmosIdle.quaternion.copy(this.camera.quaternion);
+    this.cosmosIdle.active = true;
   }
 
   private createCameraTransition(star: ArticleStarRuntime, preserveCurrentCosmosPose: boolean): CameraTransition {
@@ -677,11 +612,6 @@ export class UniverseEngine {
     this.hud.setState(this.state);
     const coverVisible = this.state === 'cover' || this.state === 'collapse';
     this.hud.setCursorGlowOpacity(coverVisible ? (this.pointerMoved ? 0.28 : 0.08) : 0);
-    if (this.state !== 'cosmos') {
-      this.hud.hideArticle();
-      this.hud.hideNebula();
-    }
-    this.hud.setFlightStatus(this.state === 'cosmos', this.flight.isPointerLocked);
     document.documentElement.dataset.pageKind = this.route;
   }
 

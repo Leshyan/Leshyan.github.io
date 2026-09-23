@@ -45,7 +45,7 @@ The current dependency-free gate checks the following categories.
 ### Interaction/state
 
 - easing endpoints are valid;
-- W follows current camera forward;
+- W follows current camera forward (movement basis kept as a tested pure module);
 - forward motion preserves camera pitch;
 - D follows camera-relative right, not world X;
 - rotated camera movement does not fall back to world axes;
@@ -59,16 +59,16 @@ The current dependency-free gate checks the following categories.
 
 ## Current offline result
 
-At the v0.3 release-candidate audit, `npm run verify:offline` reports:
+At the v0.4 release-candidate audit, `npm run verify:offline` reports:
 
 ```text
 Static audit PASS
-  17 universe source files scanned
-  4 posts validated
-  UniverseEngine.ts orchestration size: 692 lines
+  16 universe source files scanned
+  5 posts validated
+  UniverseEngine.ts orchestration size: 622 lines
 
 Syntax scan PASS
-  20 TypeScript source units parsed
+  19 TypeScript source units parsed
   6 Astro frontmatter/script units parsed
 
 Core behavior tests PASS
@@ -109,23 +109,19 @@ After `npm run dev`, verify in Chromium/Chrome at minimum:
 2. Resize from wide → tall → wide before clicking; the reservoir must remain circular, not become elliptical.
 3. Big Bang starts exactly at the clicked point and all galaxy layers originate there.
 4. Topic galaxies read as natural round/elliptical spiral systems from the initial view, not long rectangular strips.
-5. Fly close to each galaxy from multiple angles; no hard box-shaped density boundary should appear.
-6. WASD/arrows follow the current view frame; pitch affects forward travel; Shift only changes speed.
-7. Releasing pointer lock with Esc and returning to the window cannot leave movement stuck.
-8. Article label appears only for a star in front of the camera, inside the central focus radius and within distance range.
-9. Distant centered stars say `move closer`; unlocked view says `click to capture view`; valid target says `click to enter`.
-10. Entry removes the selected star into the burst; return reforms the same star along the exact reverse trajectory.
-11. Return link and browser Back both restore the exact pre-entry camera pose.
-12. During article return, the cover sentence never flashes—not even faintly at the final transition frame.
-13. Trigger return immediately after the article appears and repeat Back/Forward several times; state must remain coherent.
-14. Directly load an article URL, then return; the generated safe cosmos pose must work without a prior camera snapshot.
-15. DevTools console remains free of uncaught errors during the complete loop.
-16. With reduced-motion enabled, particle counts/timings reduce while navigation semantics remain intact.
-17. If possible, test with WebGL disabled; the static cover/article-link fallback must remain usable.
-18. On a coarse-pointer/touch device, direct article links must be available even though desktop flight controls are not.
+5. After the Big Bang the article index appears: theme-grouped cards, real links, readable over the nebula background on desktop **and** mobile viewports.
+6. Clicking a card plays the burst + camera fly-in; entry removes the selected star into the burst.
+7. Return reforms the same star along the exact reverse trajectory and restores the index.
+8. Return link and browser Back both restore the pre-entry camera pose.
+9. During article return, the cover sentence never flashes—not even faintly at the final transition frame.
+10. Trigger return immediately after the article appears and repeat Back/Forward several times; state must remain coherent.
+11. Directly load an article URL, then return; the generated safe cosmos pose must work without a prior camera snapshot.
+12. Cosmos-state canvas clicks are inert (no pointer-lock attempts, no console errors).
+13. DevTools console remains free of uncaught errors during the complete loop.
+14. With reduced-motion enabled, particle counts/timings reduce while navigation semantics remain intact.
+15. If possible, test with WebGL disabled; the static cover/article-link fallback must remain usable.
+16. On a touch device, the index is the primary navigation and requires no flight controls.
 
 ## Current environment limitation
 
-The development container's public egress is blocked below DNS/application level. Attempts through the platform resolver, public DNS, direct HTTPS IP/SNI, the npm registry and alternate public download paths cannot establish public TCP 443. Dependencies therefore cannot be installed in this container.
-
-This limitation is intentionally **not** reported as a successful Astro type check, production build or Chromium WebGL run. The dependency-backed and browser gates must be completed in an environment with the pinned packages available.
+The original development container had no public egress; v0.3+ validation now runs in an environment with registry access, so the dependency-backed gates (`astro check`, production `astro build`) and headless Chromium/WebGL smoke tests are part of the normal release loop and are expected to pass before deployment.

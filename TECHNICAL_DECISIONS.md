@@ -1,4 +1,4 @@
-# Technical decisions — Nebula Blog v0.3
+# Technical decisions — Nebula Blog v0.4
 
 ## Astro + direct Three.js
 
@@ -14,7 +14,7 @@ The spatial metaphor depends on continuity. `UniverseShell` is persisted across 
 
 The production path targets Three.js `WebGLRenderer`. Particle systems are isolated behind system boundaries so a later WebGPU/compute implementation can replace high-density simulation without changing route or content ownership.
 
-A graphics initialization failure has a content fallback: the site remains navigable as ordinary pages. Coarse-pointer/touch home views also expose direct article links rather than pretending the desktop flight controls are usable there.
+A graphics initialization failure has a content fallback: the site remains navigable as ordinary pages.
 
 ## Explicit state machine
 
@@ -41,9 +41,19 @@ A rectangular viewport must not become the physical boundary of the simulated st
 
 Stars outside the visible rectangle can therefore flow inward under pointer gravity, and the collapse carries a circular spatial envelope rather than a screen-shaped one. Resize scales the reservoir uniformly so it never becomes an ellipse.
 
-## Camera-relative navigation
+## Article index instead of free flight
 
-The camera orientation is the movement frame. W/S use the full current view direction, including pitch. A/D use the horizontal camera-right vector derived from `forward × worldUp`. Arrow keys mirror those movements. Shift changes speed only; pointer-lock mouse movement changes view only.
+The earlier edition navigated the cosmos in first person: pointer lock for view, WASD for translation, and article entry by centering a star in view. That input model was desktop-keyboard-and-mouse only, left touch devices with a state machine they could enter but never operate, and demanded a learning curve before a single article could be read.
+
+v0.4 replaces free flight with a **server-rendered article index**:
+
+- the cosmos state presents theme-grouped article cards as real `href` links, accented by each galaxy's hue (`THEME_RGB` is the single color source for both DOM and WebGL);
+- the index is ordinary markup — crawlable, no-JS safe, and identical on desktop and touch;
+- Astro's ClientRouter intercepts card clicks into the same navigation guard, so programmatic entry, Back/Forward and direct links share one state machine;
+- the cover ritual (gather → collapse → Big Bang) and the reversible article entry/return animations are unchanged;
+- the camera holds a deterministic idle sway behind the index so the scene stays alive without any input-driven motion.
+
+The spatial metaphor now answers "where am I" (the galaxies) while the index answers "what can I read" explicitly. `core/navigation.ts` remains as a tested pure module so a future touch-native flight layer can reintroduce camera-relative movement without redesigning it.
 
 ## Galaxy model and orientation
 

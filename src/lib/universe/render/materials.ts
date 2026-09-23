@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import type { ThemeId } from '../../../data/universe';
+import { THEME_RGB, type ThemeId } from '../../../data/themes';
 import { NEBULA_FRAGMENT, NEBULA_VERTEX, STAR_FRAGMENT, STAR_VERTEX } from './shaders';
 
 export const createStarMaterial = (pixelRatio: number, opacity = 1) => new THREE.ShaderMaterial({
@@ -55,16 +55,5 @@ export const createGlowTexture = () => {
   return texture;
 };
 
-const assertNeverTheme = (value: never): never => {
-  throw new Error(`Unhandled universe theme: ${String(value)}`);
-};
-
-export const themeColor = (theme: ThemeId): THREE.Color => {
-  switch (theme) {
-    case 'research': return new THREE.Color(0x9ab6ff);
-    case 'engineering': return new THREE.Color(0x7ff9e8);
-    case 'notes': return new THREE.Color(0xffb76d);
-    case 'visual': return new THREE.Color(0xd2a2ff);
-    default: return assertNeverTheme(theme);
-  }
-};
+export const themeColor = (theme: ThemeId): THREE.Color =>
+  new THREE.Color(`rgb(${THEME_RGB[theme]})`);

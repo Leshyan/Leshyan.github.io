@@ -6,7 +6,7 @@ The project is split into a document layer and a persistent world layer. Astro o
 
 ### `UniverseEngine`
 
-`UniverseEngine` is the orchestrator. It owns renderer/camera lifetime, RAF, the high-level state machine, route synchronization and camera-transition coordination. It does **not** generate galaxy distributions, own keyboard state, maintain DOM labels directly, or duplicate article metadata.
+`UniverseEngine` is the orchestrator. It owns renderer/camera lifetime, RAF, the high-level state machine, route synchronization and camera-transition coordination. It does **not** generate galaxy distributions, own input state, maintain DOM labels directly, or duplicate article metadata.
 
 The file is kept under an offline-enforced orchestration-size budget so simulation logic cannot silently accumulate back into a new “god class.”
 
@@ -33,13 +33,13 @@ The file is kept under an offline-enforced orchestration-size budget so simulati
 - `IntroStarField.ts` — circular cover reservoir, pointer gravity, collapse and Big Bang particles.
 - `BackgroundStarField.ts` — distant deterministic stellar background.
 - `NebulaSystem.ts` — two-layer topic galaxies, formation-origin transforms, final-shape frustum culling.
-- `ArticleStarSystem.ts` — article-star rendering, distance visibility and front-of-camera central focus query.
+- `ArticleStarSystem.ts` — article-star rendering and distance visibility in the ambient scene.
 - `ArticleBurstSystem.ts` — deterministic article burst sampled identically forward/reverse.
-- `FlightController.ts` — pointer lock, mouse look, keyboard state and camera-relative translation.
 
 ### UI
 
-- `ui/UniverseHud.ts` — DOM adapter for article labels, galaxy labels, crosshair, cursor glow and flight help. It caches displayed values to avoid unnecessary per-frame DOM writes.
+- `ui/UniverseHud.ts` — DOM adapter for cursor glow and document-level state attributes.
+- `components/UniverseShell.astro` — server-renders the article index: theme-grouped cards with real `href` links, accented by `THEME_RGB`. The index is static markup, so it is crawlable, works without JavaScript, and is the single navigation surface for desktop and touch.
 
 ## Content ownership
 
@@ -92,26 +92,17 @@ No half-transition is allowed to become the stable UI state.
 
 ## Camera continuity
 
-Before interactive article entry, the engine snapshots the actual cosmos camera position and quaternion. The article endpoint is generated on the user's approach side of the star. Entry samples those endpoints with one progress curve; return samples the same curve backwards.
-
-After return, `FlightController.syncFromCamera()` makes the restored quaternion the mouse-look source of truth, avoiding a first-mouse-movement snap.
+Before interactive article entry, the engine snapshots the actual cosmos camera position and quaternion (including its deterministic idle sway). The article endpoint is generated on the approach side of the star. Entry samples those endpoints with one progress curve; return samples the same curve backwards, and the restored pose becomes the base of the index-state idle sway again.
 
 Direct article URLs have no prior camera snapshot, so the engine generates a safe nearby cosmos pose for their future return path.
 
 ## Input ownership
 
-`FlightController` is the only owner of movement key state and pointer-lock view control:
-
-- W/S and Up/Down: full current camera forward/back, preserving pitch;
-- A/D and Left/Right: camera-relative horizontal right/left;
-- Shift: speed multiplier only;
-- mouse movement: yaw/pitch only.
-
-Window blur, document hiding and pointer-lock release clear pressed keys. Keyboard movement is ignored when a future input/textarea/select/contenteditable element has focus.
+The 3D runtime owns no input state beyond cover pointer tracking: mouse/touch position drives cover gravity, and a single click/tap triggers the collapse. The cosmos state is intentionally click-inert — all navigation belongs to the server-rendered article index. There is no pointer lock and no keyboard flight in this edition.
 
 ## Resource lifecycle and submission cost
 
-Every GPU-owning system has `dispose()`. `UniverseEngine.destroy()` cancels RAF, removes its own listeners, disposes systems/shared texture and disposes the renderer. `FlightController` removes all listeners it owns.
+Every GPU-owning system has `dispose()`. `UniverseEngine.destroy()` cancels RAF, removes its own listeners, disposes systems/shared texture and disposes the renderer.
 
 Opacity zero is not treated as “free”: particle groups toggle `visible` so invisible systems do not submit draw calls. CPU-updated position buffers use `DynamicDrawUsage`.
 
@@ -121,7 +112,7 @@ WebGL context loss pauses RAF; restoration re-synchronizes viewport/pixel ratio 
 
 ## WebGL-unavailable fallback
 
-`UniverseShell` catches an initial renderer failure. It marks the document as unavailable, exposes the normal static cover on home, and renders ordinary article links. Article routes remain readable without the 3D runtime. The same direct article navigation is exposed on coarse-pointer/touch home views because the defined flight controls are keyboard + mouse. A graphics/input capability limitation therefore degrades the navigation metaphor, not the content itself.
+`UniverseShell` catches an initial renderer failure. It marks the document as unavailable, exposes the normal static cover on home, and renders ordinary article links. Article routes remain readable without the 3D runtime. A graphics capability limitation therefore degrades the navigation metaphor, not the content itself.
 
 ## Verification gates
 
@@ -130,9 +121,9 @@ A visual release is ready only when all gates pass:
 1. `npm run verify:offline` passes.
 2. `astro check` passes with installed pinned dependencies.
 3. Production `astro build` passes.
-4. Chromium smoke test covers cover → collapse → Big Bang → cosmos → article → reverse return without console errors.
+4. Chromium smoke test covers cover → collapse → Big Bang → index → article → reverse return without console errors.
 5. Browser Back/Forward follows the same entry/return transition.
-6. Resize and pointer-lock release do not corrupt camera or cover geometry.
+6. Resize does not corrupt camera or cover geometry; the index remains usable on touch and small viewports.
 7. Reduced-motion path works.
-8. The circular collapse and galaxy silhouettes are visually inspected on multiple aspect ratios.
+8. The circular collapse, galaxy silhouettes and index readability are visually inspected on multiple aspect ratios.
 9. Frame time and GPU memory are inspected on representative integrated- and discrete-GPU devices before particle budgets are raised.

@@ -7,11 +7,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     <h1>Per aspera ad astra</h1>
     <p class="cover-copy__hint">Move the cursor. Let the sky gather. Click when the light is ready.</p>
   </main>
-
-  <div class="cosmos-guide" id="cosmos-guide" aria-hidden="true">
-    <span>click the field to capture the mouse</span>
-    <span>fly toward a nebula</span>
-  </div>
 </BaseLayout>
 
 
@@ -33,7 +28,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
   h1 {
     margin: 0;
-    font-family: Georgia, 'Times New Roman', serif;
+    font-family: Georgia, 'Times New Roman', 'Noto Serif SC', 'Source Han Serif SC', SimSun, serif;
     font-size: clamp(38px, 6.1vw, 88px);
     font-weight: 400;
     line-height: .98;
@@ -47,23 +42,6 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     font-size: 11px;
     letter-spacing: .06em;
     color: rgba(220,229,255,.40);
-  }
-
-  .cosmos-guide {
-    position: fixed;
-    z-index: 2;
-    left: 50%;
-    top: 26px;
-    transform: translateX(-50%);
-    display: flex;
-    gap: 20px;
-    font-size: 9px;
-    letter-spacing: .14em;
-    text-transform: uppercase;
-    color: rgba(225,235,255,.28);
-    opacity: 0;
-    transition: opacity .6s ease;
-    pointer-events: none;
   }
 
   /* Default-hidden is deliberate: during Astro swaps the new <html> can exist briefly
@@ -85,10 +63,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     transition-delay: 0s;
   }
 
-  :global(html[data-page-kind="home"][data-universe-state="cosmos"][data-pointer-locked="false"]) .cosmos-guide { opacity: 1; }
-
   @media (max-width: 640px) {
     .cover-copy__hint { line-height: 1.65; max-width: 28rem; }
-    .cosmos-guide { display: none; }
   }
 </style>

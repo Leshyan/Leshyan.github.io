@@ -2,18 +2,13 @@
 
 A spatial, persistent 3D blog built with Astro, TypeScript and direct Three.js.
 
-The home page begins as a circular off-screen star reservoir viewed through the rectangular browser viewport. Stars respond to the pointer with a softened inverse-square attraction. Clicking collapses the field into the selected point, triggers a Big Bang, and forms multiple topic galaxies. The resulting universe is navigated in first person; article stars brighten when approached, reveal their titles near the center of view, and open through a reversible star-burst transition.
+The home page begins as a circular off-screen star reservoir viewed through the rectangular browser viewport. Stars respond to the pointer with a softened inverse-square attraction. Clicking collapses the field into the selected point and triggers a Big Bang that forms the topic galaxies. Once the universe settles, the article index appears: every article is a real, server-rendered card grouped under its topic galaxy, colored by that galaxy's hue. Opening an article flies the camera to its star through a reversible star-burst transition; returning replays the same path backwards.
 
 ## Interaction
 
-- Cover: move the pointer to attract the star field; click to collapse and trigger the Big Bang.
-- Universe: click once to capture the mouse.
-- `W / S` or `↑ / ↓`: move forward/backward along the **current view direction**, including pitch.
-- `A / D` or `← / →`: move left/right relative to the current camera orientation.
-- `Shift`: movement boost only.
-- Mouse: view direction only.
-- `Esc`: release pointer lock.
-- Article star: approach it, center it, then click to enter.
+- Cover: move the pointer to attract the star field; click to collapse and trigger the Big Bang. On touch devices, tapping the field does the same.
+- Index: after the Big Bang, article cards are directly visible and clickable — no flight controls, no pointer lock, identical behavior on desktop and mobile.
+- Article entry: click a card; the camera flies toward the star while its burst plays.
 - Return / browser Back: play the same article burst and camera path in reverse before restoring the previous universe pose.
 
 ## Run
@@ -62,19 +57,19 @@ universe:
 
 ```text
 src/
-├─ components/UniverseShell.astro      persistent canvas, HUD, route guard, WebGL fallback
+├─ components/UniverseShell.astro      persistent canvas, article index, route guard, WebGL fallback
 ├─ content/posts/*.md                  article source of truth
 ├─ data/
-│  ├─ themes.ts                        single source for topic IDs
+│  ├─ themes.ts                        single source for topic IDs and accent colors
 │  └─ universe.ts                      topic-galaxy spatial configuration
 ├─ layouts/BaseLayout.astro            document shell + Astro ClientRouter
 ├─ lib/universe/
 │  ├─ UniverseEngine.ts                high-level orchestration only
-│  ├─ core/                            state, config, math, sampling, camera-relative basis
+│  ├─ core/                            state, config, math, sampling, movement basis
 │  ├─ generation/GalaxyDistribution.ts deterministic galaxy geometry model
 │  ├─ render/                          shaders and material factories
 │  ├─ systems/                         independent simulation/render systems
-│  └─ ui/UniverseHud.ts                DOM HUD adapter
+│  └─ ui/UniverseHud.ts                DOM adapter for cursor glow and document state
 └─ pages/                              home + flat article routes
 ```
 
@@ -84,6 +79,7 @@ src/
 - **Galaxies:** local X/Y spiral disks with Z thickness, central bulge, sparse stellar halo and a separate diffuse cloud layer. Each topic receives an explicit 3D orientation; the disk is not accidentally viewed edge-on because of an X/Z construction plane.
 - **Formation:** both galaxy layers start at the actual clicked Big Bang world point. Each Points object converts that world origin through its own inverse transform before the shader migrates particles toward final local coordinates.
 - **Article transition:** article star, burst particles and camera share deterministic forward/reverse progress. The selected star truly disappears during entry and reforms during return.
+- **Article index:** the cosmos state is a server-rendered, theme-grouped card catalog over the living nebula background. The camera holds a deterministic idle sway behind it.
 
 ## Robustness
 
@@ -91,7 +87,7 @@ src/
 - Browser Back/Forward uses the same home/post transition guard as programmatic navigation.
 - Return animation holds its final `article-return` frame until Astro has actually swapped the home document, preventing cover/article flashes.
 - If page preparation fails, the engine restores the route that remained mounted instead of leaving a half-completed transition.
-- If WebGL initialization fails, the site falls back to a static cover plus normal article links rather than a blank screen. Coarse-pointer/touch home views also expose the direct article links because the current flight model is intentionally keyboard + mouse.
+- If WebGL initialization fails, the site falls back to a static cover plus normal article links rather than a blank screen.
 - WebGL context loss pauses rendering and restarts after restoration.
 - Hidden particle systems are removed from draw submission with object visibility, not only zero opacity.
 - Dynamic particle position buffers use `DynamicDrawUsage` where CPU updates occur every frame.
