@@ -14,6 +14,7 @@ export interface ArticleFocusResult {
 
 export interface ArticleStarRuntime {
   def: ArticleStarDefinition;
+  galaxy: NebulaDefinition;
   world: THREE.Vector3;
   group: THREE.Group;
   core: THREE.Mesh<THREE.SphereGeometry, THREE.MeshBasicMaterial>;
@@ -73,7 +74,7 @@ export class ArticleStarSystem {
       group.add(halo);
 
       scene.add(group);
-      this.stars.push({ def: definition, world, group, core, glow, halo });
+      this.stars.push({ def: definition, galaxy: nebula, world, group, core, glow, halo });
     }
   }
 

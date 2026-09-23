@@ -44,3 +44,11 @@ Galaxy formation completed at 78% of the Big Bang window, but the cosmos switch 
 
 - Explosion-spark fade now completes by 82% and the camera push-in by 82%, so the cosmos switch happens at 82% of the window with no visual pop.
 - Index fade-in tightened (0.6s -> 0.45s opacity, 0.9s -> 0.7s transform).
+
+## v0.4.4 patch — coherent galaxy fly-in
+
+The entry burst was a world-space spherical firework and the camera approached along the index view axis, so the explosion and the galaxy read as two disconnected events.
+
+- The camera now approaches along the owning galaxy's arm: the endpoint sits just outside the star, slightly above the disk plane, looking back across the disk — the star is framed by its galaxy center and arms.
+- The burst is flattened into the galaxy's disk plane (world velocities pass through the galaxy quaternion), so it sweeps along the arm instead of exploding spherically.
+- Direct-URL fallback poses use the same arm-aligned geometry.

@@ -87,7 +87,7 @@ This avoids turning one shader into an all-purpose material and leaves a clean f
 
 Article bursts are generated from a slug-derived seed. Forward and reverse sample the same particle trajectory. The selected article star itself fades to zero integrity during entry and reforms during return; it is not left invisibly sitting underneath the burst.
 
-Camera position and quaternion use the same saved cosmos/article endpoints and the same easing curve in both directions. The article endpoint is chosen on the user's actual approach side instead of a fixed world axis.
+Camera position and quaternion use the same saved cosmos/article endpoints and the same easing curve in both directions. The article endpoint sits along the owning galaxy's arm — beyond the star, slightly above the disk plane — so the final frame reads as *zooming into this galaxy*, with the disk and arms framing the star. The entry burst is likewise flattened into the galaxy's disk plane (world velocities pass through the galaxy quaternion), making the explosion read as the star igniting within its arm rather than a detached spherical firework.
 
 ## Route/visual two-phase commit
 

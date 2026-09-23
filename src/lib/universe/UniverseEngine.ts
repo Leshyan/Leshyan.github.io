@@ -3,6 +3,7 @@ import type { ArticleStarDefinition, NebulaDefinition } from '../../data/univers
 import { UNIVERSE_CONFIG } from './core/config';
 import { clamp01, easeInOutCubic, smoothstep } from './core/math';
 import { UniverseStateMachine, type UniverseState } from './core/UniverseStateMachine';
+import { nebulaQuaternion } from './core/nebulaTransform';
 import { createGlowTexture } from './render/materials';
 import { ArticleBurstSystem } from './systems/ArticleBurstSystem';
 import { ArticleStarSystem, type ArticleStarRuntime } from './systems/ArticleStarSystem';
@@ -157,7 +158,12 @@ export class UniverseEngine {
     this.selectedStar = star;
     this.selectedStarIntegrity = 1;
     this.cameraTransition = this.createCameraTransition(star, true);
-    this.burst.configure(star.def.slug, star.world, star.def.theme);
+    this.burst.configure(
+          star.def.slug,
+          star.world,
+          star.def.theme,
+          nebulaQuaternion(star.galaxy),
+        );
     this.burst.setProgress(0);
     this.stateMachine.transition('article-enter');
     this.syncStateVisuals();
@@ -185,7 +191,12 @@ export class UniverseEngine {
     this.selectedStarIntegrity = 0;
     if (!this.cameraTransition) this.cameraTransition = this.createCameraTransition(star, false);
     this.applyCameraProgress(1);
-    this.burst.configure(star.def.slug, star.world, star.def.theme);
+    this.burst.configure(
+          star.def.slug,
+          star.world,
+          star.def.theme,
+          nebulaQuaternion(star.galaxy),
+        );
     this.burst.setProgress(1);
 
     if (this.state !== 'article') this.stateMachine.force('article');
@@ -541,18 +552,28 @@ export class UniverseEngine {
   }
 
   private createCameraTransition(star: ArticleStarRuntime, preserveCurrentCosmosPose: boolean): CameraTransition {
+    // Approach along the owning galaxy's arm: the camera settles just outside the
+    // star looking back across the disk, so the galaxy center and arms frame the
+    // star instead of reading as a detached backdrop.
+    const galaxyQuat = nebulaQuaternion(star.galaxy);
+    const radial = new THREE.Vector3(star.def.offset[0], star.def.offset[1], 0);
+    if (radial.lengthSq() < 0.001) radial.set(1, 0, 0);
+    radial.normalize().applyQuaternion(galaxyQuat);
+    const diskNormal = new THREE.Vector3(0, 0, 1).applyQuaternion(galaxyQuat);
+
+    const articlePosition = star.world.clone()
+      .addScaledVector(radial, 6.5)
+      .addScaledVector(diskNormal, 1.4);
+    const articleQuaternion = this.lookQuaternion(articlePosition, star.world);
+
     const cosmosPosition = preserveCurrentCosmosPose
       ? this.camera.position.clone()
-      : star.world.clone().add(new THREE.Vector3(0, 0.08, 1).normalize().multiplyScalar(10.5));
+      : star.world.clone()
+        .addScaledVector(radial, 10.5)
+        .addScaledVector(diskNormal, 1.8);
     const cosmosQuaternion = preserveCurrentCosmosPose
       ? this.camera.quaternion.clone()
       : this.lookQuaternion(cosmosPosition, star.world);
-
-    const approachDirection = cosmosPosition.clone().sub(star.world);
-    if (approachDirection.lengthSq() < 0.001) approachDirection.set(0, 0.08, 1);
-    approachDirection.normalize();
-    const articlePosition = star.world.clone().addScaledVector(approachDirection, 4.8);
-    const articleQuaternion = this.lookQuaternion(articlePosition, star.world);
 
     return { cosmosPosition, cosmosQuaternion, articlePosition, articleQuaternion };
   }

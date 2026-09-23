@@ -10,6 +10,7 @@ export class ArticleBurstSystem {
   private points: THREE.Points<THREE.BufferGeometry, THREE.ShaderMaterial> | null = null;
   private velocities: Float32Array | null = null;
   private readonly origin = new THREE.Vector3();
+  private readonly scratch = new THREE.Vector3();
   private pixelRatio: number;
 
   constructor(scene: THREE.Scene, pixelRatio: number, reducedMotion: boolean) {
@@ -18,7 +19,7 @@ export class ArticleBurstSystem {
     this.reducedMotion = reducedMotion;
   }
 
-  configure(slug: string, origin: THREE.Vector3, theme: ThemeId) {
+  configure(slug: string, origin: THREE.Vector3, theme: ThemeId, plane?: THREE.Quaternion) {
     this.cleanup();
     this.origin.copy(origin);
 
@@ -39,9 +40,17 @@ export class ArticleBurstSystem {
       const z = randomSigned(random);
       const radial = Math.sqrt(Math.max(0, 1 - z * z));
       const speed = 2.8 + Math.pow(random(), 0.45) * 12;
-      velocities[i3] = Math.cos(theta) * radial * speed;
-      velocities[i3 + 1] = Math.sin(theta) * radial * speed;
-      velocities[i3 + 2] = z * speed;
+      // Blast along the owning galaxy's disk plane so the burst reads as part of
+      // the galaxy rather than a detached spherical firework.
+      this.scratch.set(
+        Math.cos(theta) * radial * speed,
+        Math.sin(theta) * radial * speed,
+        z * speed * 0.3,
+      );
+      if (plane) this.scratch.applyQuaternion(plane);
+      velocities[i3] = this.scratch.x;
+      velocities[i3 + 1] = this.scratch.y;
+      velocities[i3 + 2] = this.scratch.z;
       positions[i3] = origin.x;
       positions[i3 + 1] = origin.y;
       positions[i3 + 2] = origin.z;
