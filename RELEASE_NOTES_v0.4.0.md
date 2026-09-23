@@ -52,3 +52,7 @@ The entry burst was a world-space spherical firework and the camera approached a
 - The camera now approaches along the owning galaxy's arm: the endpoint sits just outside the star, slightly above the disk plane, looking back across the disk — the star is framed by its galaxy center and arms.
 - The burst is flattened into the galaxy's disk plane (world velocities pass through the galaxy quaternion), so it sweeps along the arm instead of exploding spherically.
 - Direct-URL fallback poses use the same arm-aligned geometry.
+
+## v0.4.5 patch — chronological glass index
+
+The four-group grid would not scale as articles accumulate, so the index is now a single chronological column (newest first) of frosted-glass cards: translucent panels with backdrop blur and saturation over the living nebula, each accented by its theme's star glyph and hue. Theme grouping remains in the data (card accents), but navigation order is by date.
