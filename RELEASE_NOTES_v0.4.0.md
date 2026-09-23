@@ -30,3 +30,10 @@ Measured on the deployed site: clicking an article card took ~1.8s before the ar
 - The navigation loader now starts the document fetch immediately and awaits it **in parallel with** the entry/return animation; the network wait hides inside the animation window.
 - Astro `prefetch: { prefetchAll: true, defaultStrategy: 'viewport' }` warms the HTTP cache for all article pages (and the home back-link) while the reader is on the index, so the concurrent fetch usually resolves from cache.
 - Result: article renders when the fly-in ends (~1.05–1.1s), independent of network latency.
+
+## v0.4.2 patch — near-camera nebula clarity
+
+Flying toward an article star drove every galaxy sprite into its point-size cap (42px), so the background nebula degenerated into large soft additive bokeh discs.
+
+- Point-size cap lowered to 26px and the uncapped size is now passed to the fragment shader (`vSizePx`).
+- Sprites above ~12px get deterministic hash-grain ("micro-star" sparkle) modulated into their alpha, so capped sprites resolve into clumps of fine stars instead of smooth discs; brightness is compensated to keep the galaxy's overall luminance.

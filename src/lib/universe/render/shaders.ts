@@ -38,6 +38,7 @@ export const NEBULA_VERTEX = /* glsl */`
   attribute float aFormationCurl;
   varying vec3 vColor;
   varying float vAlpha;
+  varying float vSizePx;
   uniform float uPixelRatio;
   uniform float uOpacity;
   uniform float uTime;
@@ -67,7 +68,8 @@ export const NEBULA_VERTEX = /* glsl */`
     vAlpha = aAlpha * uOpacity * smoothstep(0.0, 0.16, formed);
     vec4 mvPosition = modelViewMatrix * vec4(p, 1.0);
     float pointSize = aSize * uPixelRatio * (130.0 / max(3.0, -mvPosition.z));
-    gl_PointSize = min(pointSize, 42.0 * uPixelRatio);
+    gl_PointSize = min(pointSize, 26.0 * uPixelRatio);
+    vSizePx = pointSize;
     gl_Position = projectionMatrix * mvPosition;
   }
 `;
@@ -75,6 +77,7 @@ export const NEBULA_VERTEX = /* glsl */`
 export const NEBULA_FRAGMENT = /* glsl */`
   varying vec3 vColor;
   varying float vAlpha;
+  varying float vSizePx;
 
   void main() {
     vec2 p = gl_PointCoord - 0.5;
@@ -83,6 +86,18 @@ export const NEBULA_FRAGMENT = /* glsl */`
     float core = pow(max(0.0, 1.0 - r), 2.0);
     float edge = 1.0 - smoothstep(0.42, 1.0, r);
     float alpha = core * edge * vAlpha;
+
+    // Near the camera, size-capped sprites would read as soft bokeh discs.
+    // Resolve them into clumps of micro-stars so galaxies keep texture when approached.
+    float grainAmt = smoothstep(12.0, 28.0, vSizePx);
+    if (grainAmt > 0.001) {
+      vec2 g = p * max(4.0, vSizePx * 0.5);
+      vec2 id = floor(g);
+      float h = fract(sin(dot(id, vec2(127.1, 311.7))) * 43758.5453);
+      float d = length(fract(g) - 0.5);
+      float sparkle = smoothstep(0.35, 0.95, h) * (1.0 - smoothstep(0.0, 0.42, d));
+      alpha *= mix(1.0, 0.5 + 1.25 * sparkle, grainAmt * edge);
+    }
     gl_FragColor = vec4(vColor, alpha);
   }
 `;
