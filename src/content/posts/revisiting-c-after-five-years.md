@@ -1,6 +1,6 @@
 ---
 title: 时过5年重温C
-description: 从「指令执行机 + 一片存储」的最小抽象出发，重建对 C、指针、变量与类型的直觉。
+description: C 从何而来？
 theme: engineering
 published: 2026-09-24
 universe:
