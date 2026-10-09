@@ -63,3 +63,11 @@ Returning from an article snapped the index in at full opacity: the two-phase re
 
 - Index entry is now a CSS **animation** (0.55s rise + fade) instead of a transition; animations replay from the selector match itself and are immune to the commit's one-frame state flip.
 - Big Bang -> index uses the same animation; exit still uses the transition path. Reduced-motion shortens it to 0.01ms.
+
+## v0.4.7 patch — gentler focus-mode star handling + density scaling
+
+Entering an article snapped all sibling stars to a hard 0.055 dim exactly as the selected star was at its brightest, reading as "stars suddenly vanish" when the galaxy rotated into view.
+
+- The selected star now shrinks into the blast origin as it dissolves (scale follows integrity), so its disappearance reads as being drawn into the explosion.
+- Siblings in focus mode keep a soft distance-aware glimmer (0.025..0.185 by proximity) instead of a flat hard dim.
+- Ambient brightness of article stars now scales with `min(1, 6/count)`: a galaxy holding 60 articles glows like one holding 6, so a growing article count cannot wash out the index view.

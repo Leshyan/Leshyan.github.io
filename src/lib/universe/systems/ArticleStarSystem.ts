@@ -29,6 +29,8 @@ export class ArticleStarSystem {
   private readonly projected = new THREE.Vector3();
   private readonly viewDirection = new THREE.Vector3();
   private readonly toStar = new THREE.Vector3();
+  /** Ambient-brightness scale so total star glow stays constant as articles grow. */
+  private readonly ambientScale: number;
 
   constructor(
     scene: THREE.Scene,
@@ -76,6 +78,10 @@ export class ArticleStarSystem {
       scene.add(group);
       this.stars.push({ def: definition, galaxy: nebula, world, group, core, glow, halo });
     }
+
+    // Reference count: at or below it stars shine at full strength; beyond it each
+    // star dims proportionally, so a galaxy of 60 articles glows like one of 6.
+    this.ambientScale = Math.min(1, 6 / Math.max(1, this.stars.length));
   }
 
   findBySlug(slug: string | null) {
@@ -127,18 +133,25 @@ export class ArticleStarSystem {
       const star = this.stars[index];
       const distance = camera.position.distanceTo(star.world);
       let visibility = 0;
+      const selected = star.def.slug === selectedSlug;
 
       if (state === 'cosmos' || state === 'article-enter') {
-        visibility = 0.025 + (1 - smoothstep(24, 60, distance)) * 0.92;
+        visibility = (0.025 + (1 - smoothstep(24, 60, distance)) * 0.92) * this.ambientScale;
       } else if (state === 'article' || state === 'article-return') {
-        visibility = star.def.slug === selectedSlug ? 0.92 : 0.055;
+        // Focus mode: the selected star dissolves into its burst; siblings keep a
+        // soft distance-aware glimmer instead of a hard dim, so the transition
+        // out of the index reads as focusing rather than stars snapping off.
+        visibility = selected
+          ? 0.92
+          : (0.025 + (1 - smoothstep(24, 60, distance)) * 0.16) * this.ambientScale;
       }
 
-      if (
-        star.def.slug === selectedSlug
-        && (state === 'article-enter' || state === 'article' || state === 'article-return')
-      ) {
+      // The selected star shrinks into the blast origin as it dissolves, so its
+      // disappearance reads as being drawn into the explosion.
+      let collapse = 1;
+      if (selected && (state === 'article-enter' || state === 'article' || state === 'article-return')) {
         visibility *= clamp01(selectedIntegrity);
+        collapse = 0.1 + clamp01(selectedIntegrity) * 0.9;
       }
 
       star.group.visible = visibility > 0.001;
@@ -148,9 +161,9 @@ export class ArticleStarSystem {
       star.core.material.opacity = visibility * 0.9;
       (star.glow.material as THREE.SpriteMaterial).opacity = visibility * 0.42;
       (star.halo.material as THREE.SpriteMaterial).opacity = visibility * 0.12;
-      star.core.scale.setScalar(0.88 + visibility * 0.42);
-      star.glow.scale.setScalar((2 + visibility * 2) * pulse);
-      star.halo.scale.setScalar((4.3 + visibility * 3.5) * pulse);
+      star.core.scale.setScalar((0.88 + visibility * 0.42) * collapse);
+      star.glow.scale.setScalar((2 + visibility * 2) * pulse * collapse);
+      star.halo.scale.setScalar((4.3 + visibility * 3.5) * pulse * collapse);
     }
   }
 
