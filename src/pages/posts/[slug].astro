@@ -61,6 +61,41 @@ const hasCJK = /[\u3400-\u9fff\uf900-\ufaff\uff00-\uffef]/.test(post.data.title)
   .article-body li { margin: .55em 0; }
   .article-body a { color: #cad8ff; }
 
+  /* Code: quiet translucent panels + soft inline chips, matching the article wash.
+     !important overrides the syntax highlighter's inline background. */
+  .article-body pre {
+    margin: 1.9em 0;
+    padding: 1em 1.3em;
+    border: 1px solid rgba(180,198,255,.09);
+    border-radius: 12px;
+    background: rgba(5,8,18,.68) !important;
+    font-family: ui-monospace, 'JetBrains Mono', 'Fira Code', Menlo, Consolas, 'Noto Sans SC', monospace;
+    font-size: .82em;
+    line-height: 1.75;
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+
+  .article-body pre code {
+    font-family: inherit;
+    font-size: inherit;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    color: inherit;
+  }
+
+  .article-body code {
+    font-family: ui-monospace, 'JetBrains Mono', 'Fira Code', Menlo, Consolas, 'Noto Sans SC', monospace;
+    font-size: .84em;
+    padding: .16em .42em;
+    border-radius: 5px;
+    background: rgba(130,160,255,.10);
+    border: 1px solid rgba(140,168,255,.13);
+    color: #cfe0ff;
+  }
+
   .article-back {
     position: fixed;
     z-index: 5;

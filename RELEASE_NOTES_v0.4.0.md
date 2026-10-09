@@ -100,3 +100,10 @@ Removed the headline sizing rule (newest entry larger): all log entries now shar
 - `universe.offset` is optional in article frontmatter: omitted stars are auto-placed by a deterministic hash sampler inside the galaxy disk, collision-aware against siblings (tested for determinism and 40-star density).
 - Existing four galaxies and all explicit offsets are unchanged — the deployed look is identical.
 - Index legend scrolls horizontally as a single row on mobile instead of wrapping.
+
+## v0.6.1 patch — article code styling
+
+Code blocks shipped completely unstyled (measured live: 0 padding, square corners, opaque highlighter background, 17px generic monospace inheriting the body's 1.9 line-height) while inline code was a bare font swap.
+
+- `pre` becomes a quiet translucent panel (rgba wash + hairline border + 12px radius, `!important` over the highlighter's inline background), 0.82em mono at 1.75 line-height, thin scrollbar.
+- Inline `code` becomes a soft tinted chip; `pre code` explicitly resets the chip look.
