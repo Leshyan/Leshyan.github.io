@@ -404,17 +404,6 @@ const legendThemes = NEBULAE.map((nebula) => ({
     overflow: hidden;
   }
 
-  /* Newest entry is the headline of the log. */
-  .universe-index__card:first-of-type .universe-index__name {
-    font-size: calc(clamp(28px, 3.4vw, 42px) * var(--name-scale));
-    line-height: 1.2;
-  }
-  .universe-index__card:first-of-type .universe-index__desc { color: rgba(228,234,248,.62); }
-  .universe-index__card:first-of-type .universe-index__node {
-    width: 14px;
-    height: 14px;
-    left: -1.5px;
-  }
 
   .universe-index__card:hover .universe-index__name { color: #fff; }
   .universe-index__card:hover .universe-index__body { transform: translateX(9px); }

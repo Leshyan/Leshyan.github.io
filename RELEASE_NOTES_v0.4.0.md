@@ -88,3 +88,7 @@ At equal font-size, CJK glyphs nearly fill the em box while Georgia's Latin x-he
 
 - Titles containing CJK are detected at build time (`hasCJK`) and scaled to 0.92 of the Latin size on the index (regular + headline entries).
 - Article-page h1 gets the same treatment (0.92 scale, line-height 1.14, no negative letter-spacing for CJK).
+
+## v0.5.2 patch — uniform entry titles
+
+Removed the headline sizing rule (newest entry larger): all log entries now share one title size, differing only by the CJK 0.92 optical scale.
