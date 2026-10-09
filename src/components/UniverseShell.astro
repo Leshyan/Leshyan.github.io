@@ -14,6 +14,7 @@ const articleStars: (ArticleStarDefinition & { published: Date })[] = posts.map(
 }));
 
 const indexArticles = [...articleStars].sort((a, b) => b.published.getTime() - a.published.getTime());
+const hasCJK = (text: string) => /[\u3400-\u9fff\uf900-\ufaff\uff00-\uffef]/.test(text);
 const legendThemes = NEBULAE.map((nebula) => ({
   title: nebula.title,
   rgb: THEME_RGB[nebula.id],
@@ -39,7 +40,7 @@ const legendThemes = NEBULAE.map((nebula) => ({
       </header>
       {indexArticles.map((article, index) => (
         <a
-          class="universe-index__card"
+          class:list={['universe-index__card', { 'is-cjk': hasCJK(article.title) }]}
           style={`--star: ${THEME_RGB[article.theme]};`}
           href={`/posts/${encodeURIComponent(article.slug)}`}
         >
@@ -375,9 +376,14 @@ const legendThemes = NEBULAE.map((nebula) => ({
     font-variant-numeric: tabular-nums;
   }
 
+  /* CJK glyphs nearly fill the em box while Latin x-height sits near .48em,
+     so titles containing Chinese are scaled down to match optical size. */
+  .universe-index__card { --name-scale: 1; }
+  .universe-index__card.is-cjk { --name-scale: 0.92; }
+
   .universe-index__name {
     display: block;
-    font: 400 clamp(20px, 2.1vw, 27px)/1.32 Georgia, 'Times New Roman', 'Noto Serif SC', 'Source Han Serif SC', SimSun, serif;
+    font: 400 calc(clamp(20px, 2.1vw, 27px) * var(--name-scale))/1.34 Georgia, 'Times New Roman', 'Noto Serif SC', 'Source Han Serif SC', SimSun, serif;
     letter-spacing: .01em;
     color: rgba(246,248,255,.94);
     text-shadow: 0 1px 18px rgba(0,0,6,.8);
@@ -400,8 +406,8 @@ const legendThemes = NEBULAE.map((nebula) => ({
 
   /* Newest entry is the headline of the log. */
   .universe-index__card:first-of-type .universe-index__name {
-    font-size: clamp(28px, 3.4vw, 42px);
-    line-height: 1.18;
+    font-size: calc(clamp(28px, 3.4vw, 42px) * var(--name-scale));
+    line-height: 1.2;
   }
   .universe-index__card:first-of-type .universe-index__desc { color: rgba(228,234,248,.62); }
   .universe-index__card:first-of-type .universe-index__node {

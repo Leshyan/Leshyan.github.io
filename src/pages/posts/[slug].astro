@@ -9,10 +9,11 @@ export async function getStaticPaths() {
 
 const { post } = Astro.props;
 const { Content } = await render(post);
+const hasCJK = /[\u3400-\u9fff\uf900-\ufaff\uff00-\uffef]/.test(post.data.title);
 ---
 
 <BaseLayout title={`${post.data.title} — Leshyan's blog`} description={post.data.description} pageKind="post">
-  <main class="article-page" data-article-slug={post.id}>
+  <main class:list={['article-page', { 'is-cjk': hasCJK }]} data-article-slug={post.id}>
     <a class="article-back" href="/" aria-label="Return to the universe">
       <span aria-hidden="true">←</span>
       <em>return to universe</em>
@@ -49,6 +50,7 @@ const { Content } = await render(post);
   .article-page header { margin-bottom: 42px; }
   .article-theme { margin: 0 0 14px; font-size: 10px; letter-spacing: .3em; text-transform: uppercase; color: rgba(190,205,255,.50); }
   .article-page h1 { margin: 0; font: 400 clamp(42px, 7vw, 78px)/.98 Georgia, 'Times New Roman', 'Noto Serif SC', 'Source Han Serif SC', SimSun, serif; letter-spacing: -.035em; color: rgba(250,251,255,.97); }
+  .article-page.is-cjk h1 { font-size: clamp(38px, 6.4vw, 71px); line-height: 1.14; letter-spacing: 0; }
   .article-description { max-width: 620px; margin: 25px 0 14px; font-size: 15px; line-height: 1.7; color: rgba(228,233,247,.58); }
   .article-page time { font-size: 10px; letter-spacing: .08em; color: rgba(222,229,247,.32); }
   .article-rule { height: 1px; margin: 0 0 42px; background: linear-gradient(90deg, rgba(180,196,255,.28), rgba(180,196,255,0)); }

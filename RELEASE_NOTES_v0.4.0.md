@@ -81,3 +81,10 @@ The glass-card column read as generic (uniform panels, dot+title+desc template, 
 - header "Field Notes" plus a four-theme color legend restores the theme grouping lost with the flat list;
 - entries numbered 01.. newest-first; the newest entry is headline-sized, descriptions clamp to two lines;
 - mobile: same spine, dates collapsed, legend wrapped.
+
+## v0.5.1 patch — CJK/Latin optical size balance
+
+At equal font-size, CJK glyphs nearly fill the em box while Georgia's Latin x-height sits near 0.48em, so Chinese titles read visibly larger and heavier than English ones.
+
+- Titles containing CJK are detected at build time (`hasCJK`) and scaled to 0.92 of the Latin size on the index (regular + headline entries).
+- Article-page h1 gets the same treatment (0.92 scale, line-height 1.14, no negative letter-spacing for CJK).
