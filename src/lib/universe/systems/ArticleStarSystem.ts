@@ -128,6 +128,7 @@ export class ArticleStarSystem {
     timeSeconds: number,
     selectedSlug: string | null,
     selectedIntegrity = 1,
+    highlightSlug: string | null = null,
   ) {
     for (let index = 0; index < this.stars.length; index += 1) {
       const star = this.stars[index];
@@ -137,6 +138,11 @@ export class ArticleStarSystem {
 
       if (state === 'cosmos' || state === 'article-enter') {
         visibility = (0.025 + (1 - smoothstep(24, 60, distance)) * 0.92) * this.ambientScale;
+        // A hovered index card ignites its star regardless of camera distance, so the
+        // log and the universe answer each other while the camera stays at rest.
+        if (state === 'cosmos' && highlightSlug !== null && star.def.slug === highlightSlug) {
+          visibility = 0.92;
+        }
       } else if (state === 'article' || state === 'article-return') {
         // Focus mode: the selected star dissolves into its burst; siblings keep a
         // soft distance-aware glimmer instead of a hard dim, so the transition

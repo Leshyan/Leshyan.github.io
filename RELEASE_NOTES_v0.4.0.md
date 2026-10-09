@@ -118,3 +118,8 @@ Entering the cosmos state snapped the camera by up to ±0.35 world units (and ±
 
 - The idle sway now measures time from the capture moment (`startElapsed`), so every sine term begins at zero and the sway grows continuously out of the captured pose (measured after: first-frame delta 0.001, per-frame 0.002).
 - The same fix covers the article-return → index path, which shared the latent snap.
+
+## v0.7.0 — real content only + card/star linkage
+
+- Removed the four placeholder demo articles; the site now carries its two real articles. Empty galaxies (research/notes/visual) remain as reserved future topics.
+- Index cards and the universe now answer each other: hovering (or keyboard-focusing) a log entry ignites that article's star in its galaxy regardless of camera distance — the stars, dormant since free flight was removed, are meaningful again.

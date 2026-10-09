@@ -56,6 +56,7 @@ const legendThemes = NEBULAE.map((nebula) => ({
           class:list={['universe-index__card', { 'is-cjk': hasCJK(article.title) }]}
           style={`--star: ${THEME_RGB[article.theme]};`}
           href={`/posts/${encodeURIComponent(article.slug)}`}
+          data-slug={article.slug}
         >
           <span class="universe-index__node" aria-hidden="true"></span>
           <span class="universe-index__body">
@@ -190,7 +191,25 @@ const legendThemes = NEBULAE.map((nebula) => ({
     });
   };
 
+  // Card <-> star linkage: hovering (or keyboard-focusing) a log entry ignites
+  // its article star in the cosmos backdrop. Delegated once; the nav persists.
+  const wireIndexHighlight = () => {
+    const index = document.querySelector<HTMLElement>('#universe-index');
+    if (!index || index.dataset.highlightWired) return;
+    index.dataset.highlightWired = '1';
+    const slugFrom = (target: EventTarget | null): string | null => {
+      const card = target instanceof Element ? target.closest('a.universe-index__card') : null;
+      return card?.getAttribute('data-slug') ?? null;
+    };
+    const set = (slug: string | null) => window.__nebulaUniverse?.highlightStar(slug);
+    index.addEventListener('mouseover', (event) => set(slugFrom(event.target)));
+    index.addEventListener('mouseleave', () => set(null));
+    index.addEventListener('focusin', (event) => set(slugFrom(event.target)));
+    index.addEventListener('focusout', () => set(null));
+  };
+
   wireNavigationGuard();
+  wireIndexHighlight();
   boot();
   if (!window.__nebulaPageLoadWired) {
     window.__nebulaPageLoadWired = true;

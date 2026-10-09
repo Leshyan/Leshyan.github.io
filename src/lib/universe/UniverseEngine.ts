@@ -73,6 +73,7 @@ export class UniverseEngine {
   private returnResolve: (() => void) | null = null;
   private returnReady = false;
   private selectedStarIntegrity = 1;
+  private highlightedSlug: string | null = null;
   private readonly cosmosIdle = {
     position: new THREE.Vector3(),
     quaternion: new THREE.Quaternion(),
@@ -122,6 +123,11 @@ export class UniverseEngine {
 
   get state(): UniverseState {
     return this.stateMachine.state;
+  }
+
+  /** Index-card hover linkage: ignite the given article star in the cosmos view. */
+  highlightStar(slug: string | null) {
+    this.highlightedSlug = slug;
   }
 
   start() {
@@ -342,6 +348,7 @@ export class UniverseEngine {
       this.globalElapsed,
       this.currentSlug,
       this.selectedStarIntegrity,
+      this.highlightedSlug,
     );
   }
 

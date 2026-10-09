@@ -8,6 +8,7 @@ The home page begins as a circular off-screen star reservoir viewed through the 
 
 - Cover: move the pointer to attract the star field; click to collapse and trigger the Big Bang. On touch devices, tapping the field does the same.
 - Index: after the Big Bang, the log is directly readable and every entry is a real link — no flight controls, no pointer lock, identical behavior on desktop and mobile.
+- Hover/focus a log entry and its article star ignites in the galaxy behind the index.
 - Article entry: click a card; the camera flies toward the star while its burst plays.
 - Return / browser Back: play the same article burst and camera path in reverse before restoring the previous universe pose.
 
