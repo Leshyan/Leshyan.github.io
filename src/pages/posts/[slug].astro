@@ -1,6 +1,7 @@
 ---
 import { getCollection, render } from 'astro:content';
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import 'katex/dist/katex.min.css';
 
 export async function getStaticPaths() {
   const posts = await getCollection('posts');
@@ -85,6 +86,10 @@ const hasCJK = /[\u3400-\u9fff\uf900-\ufaff\uff00-\uffef]/.test(post.data.title)
     background: none;
     color: inherit;
   }
+
+  /* Math: match the display-block rhythm of paragraphs and code panels. */
+  .article-body .katex-display { margin: 1.7em 0; }
+  .article-body .katex { text-shadow: 0 1px 14px rgba(0,0,6,.6); }
 
   .article-body code {
     font-family: ui-monospace, 'JetBrains Mono', 'Fira Code', Menlo, Consolas, 'Noto Sans SC', monospace;

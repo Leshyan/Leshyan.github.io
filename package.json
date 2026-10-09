@@ -1,6 +1,6 @@
 {
   "name": "nebula-blog",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "private": true,
   "type": "module",
   "scripts": {
@@ -15,7 +15,11 @@
     "verify": "npm run verify:offline && npm run check && npm run build"
   },
   "dependencies": {
+    "@astrojs/markdown-remark": "^7.3.2",
     "astro": "7.3.2",
+    "katex": "^0.19.0",
+    "rehype-katex": "^7.0.1",
+    "remark-math": "^6.0.0",
     "three": "0.185.0"
   },
   "devDependencies": {

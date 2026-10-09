@@ -107,3 +107,7 @@ Code blocks shipped completely unstyled (measured live: 0 padding, square corner
 
 - `pre` becomes a quiet translucent panel (rgba wash + hairline border + 12px radius, `!important` over the highlighter's inline background), 0.82em mono at 1.75 line-height, thin scrollbar.
 - Inline `code` becomes a soft tinted chip; `pre code` explicitly resets the chip look.
+
+## v0.6.2 — LaTeX math rendering
+
+Articles now render LaTeX: `$inline$` and `$$display$$` via remark-math + rehype-katex on the classic unified pipeline (`markdown.processor: unified({...})` — Astro 7's default Sätteri processor runs no remark/rehype plugins). KaTeX outputs pure HTML+CSS at build time; its math fonts are bundled; display blocks adopt the article's paragraph rhythm. Shiki code highlighting and existing articles are unchanged.
