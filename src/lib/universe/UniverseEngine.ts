@@ -76,6 +76,7 @@ export class UniverseEngine {
   private readonly cosmosIdle = {
     position: new THREE.Vector3(),
     quaternion: new THREE.Quaternion(),
+    startElapsed: 0,
     active: false,
   };
 
@@ -406,9 +407,12 @@ export class UniverseEngine {
   }
 
   // Deterministic idle sway keeps the nebula field alive behind the article index.
+  // Time is measured from the capture moment so every sine term starts at zero:
+  // entering the cosmos state grows the sway out of the captured pose instead of
+  // snapping to an arbitrary sine phase (which read as a one-frame camera jump).
   private updateCosmosIdle() {
     if (!this.cosmosIdle.active) return;
-    const t = this.globalElapsed;
+    const t = this.globalElapsed - this.cosmosIdle.startElapsed;
     this.camera.position.set(
       this.cosmosIdle.position.x + Math.sin(t * 0.07) * 0.35,
       this.cosmosIdle.position.y + Math.sin(t * 0.09) * 0.3,
@@ -548,6 +552,7 @@ export class UniverseEngine {
   private captureCosmosIdle() {
     this.cosmosIdle.position.copy(this.camera.position);
     this.cosmosIdle.quaternion.copy(this.camera.quaternion);
+    this.cosmosIdle.startElapsed = this.globalElapsed;
     this.cosmosIdle.active = true;
   }
 

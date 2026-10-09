@@ -111,3 +111,10 @@ Code blocks shipped completely unstyled (measured live: 0 padding, square corner
 ## v0.6.2 — LaTeX math rendering
 
 Articles now render LaTeX: `$inline$` and `$$display$$` via remark-math + rehype-katex on the classic unified pipeline (`markdown.processor: unified({...})` — Astro 7's default Sätteri processor runs no remark/rehype plugins). KaTeX outputs pure HTML+CSS at build time; its math fonts are bundled; display blocks adopt the article's paragraph rhythm. Shiki code highlighting and existing articles are unchanged.
+
+## v0.6.3 patch — no camera snap at the Big Bang → index handoff
+
+Entering the cosmos state snapped the camera by up to ±0.35 world units (and ±0.7° rotation) in one frame: the idle sway sampled global-time sines whose phase was arbitrary at the switch instant (measured: x jumped 0 → 0.118 in a single frame, reading as galaxies shifting sideways exactly as the index appeared).
+
+- The idle sway now measures time from the capture moment (`startElapsed`), so every sine term begins at zero and the sway grows continuously out of the captured pose (measured after: first-frame delta 0.001, per-frame 0.002).
+- The same fix covers the article-return → index path, which shared the latent snap.
