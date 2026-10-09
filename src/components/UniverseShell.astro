@@ -235,11 +235,17 @@ const indexArticles = [...articleStars].sort((a, b) => b.published.getTime() - a
   }
 
   html[data-page-kind="home"][data-universe-state="cosmos"] .universe-index {
-    opacity: 1;
     visibility: visible;
     pointer-events: auto;
-    transform: none;
-    transition-delay: 0s;
+    /* Enter via animation, not transition: the two-phase return commit swaps the
+       state attribute in one frame, and an entry animation replays reliably no
+       matter what computed style the node had on the previous frame. */
+    animation: universe-index-in .55s cubic-bezier(.25,.7,.25,1) both;
+  }
+
+  @keyframes universe-index-in {
+    from { opacity: 0; transform: translateY(18px); }
+    to { opacity: 1; transform: none; }
   }
 
   .universe-index__scroll {
@@ -370,6 +376,7 @@ const indexArticles = [...articleStars].sort((a, b) => b.published.getTime() - a
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .universe-index, .cursor-glow { transition-duration: 0.01ms !important; }
+    .universe-index { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+    .cursor-glow { transition-duration: 0.01ms !important; }
   }
 </style>

@@ -56,3 +56,10 @@ The entry burst was a world-space spherical firework and the camera approached a
 ## v0.4.5 patch — chronological glass index
 
 The four-group grid would not scale as articles accumulate, so the index is now a single chronological column (newest first) of frosted-glass cards: translucent panels with backdrop blur and saturation over the living nebula, each accented by its theme's star glyph and hue. Theme grouping remains in the data (card accents), but navigation order is by date.
+
+## v0.4.6 patch — smooth index re-entry on return
+
+Returning from an article snapped the index in at full opacity: the two-phase return commit flips the state attribute in a single frame and the CSS *transition* had no reliable previous-frame computed style to interpolate from, so the 0.45s fade was skipped entirely (measured: opacity 0 -> 1 between adjacent samples).
+
+- Index entry is now a CSS **animation** (0.55s rise + fade) instead of a transition; animations replay from the selector match itself and are immune to the commit's one-frame state flip.
+- Big Bang -> index uses the same animation; exit still uses the transition path. Reduced-motion shortens it to 0.01ms.
