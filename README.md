@@ -49,7 +49,9 @@ universe:
 ---
 ```
 
-`universe.offset` is a local coordinate inside the owning galaxy. X/Y live in the galaxy disk; Z is its thickness. Keep article stars embedded near the disk instead of floating far above it.
+`universe.offset` is optional: omit it and the article star is auto-placed deterministically inside its galaxy (slug-hashed, collision-aware). When written explicitly, X/Y live in the galaxy disk and Z is its thickness.
+
+Topics are capped at `MAX_THEMES = 9` (one theme = one galaxy; readers track roughly 7±2). The offline audit and core tests reject a tenth theme — use tags for finer classification instead. Galaxy `position` is likewise optional: themes without one are auto-placed on deterministic layout rings with enforced separation.
 
 `UniverseShell.astro` derives runtime article-star definitions from the Astro content collection. Topic IDs come from `src/data/themes.ts`; topic spatial definitions come from `src/data/universe.ts`.
 

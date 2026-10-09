@@ -14,7 +14,8 @@ export interface NebulaDefinition {
   id: ThemeId;
   title: string;
   subtitle: string;
-  position: [number, number, number];
+  /** Optional: omitted positions are auto-placed by resolveNebulaLayout(). */
+  position?: [number, number, number];
   radius: number;
   /** Number of dominant spiral arms used by the procedural distribution. */
   arms: number;
@@ -23,6 +24,11 @@ export interface NebulaDefinition {
   hueA: [number, number, number];
   hueB: [number, number, number];
 }
+
+/** A definition after adaptive layout resolution: position is always concrete. */
+export type ResolvedNebulaDefinition = NebulaDefinition & {
+  position: [number, number, number];
+};
 
 export const NEBULAE: NebulaDefinition[] = [
   {

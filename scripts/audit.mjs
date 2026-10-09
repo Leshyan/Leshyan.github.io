@@ -56,6 +56,8 @@ const themeSource = fs.readFileSync(path.join(src, 'data', 'themes.ts'), 'utf8')
 const themeArray = themeSource.match(/THEME_IDS\s*=\s*\[([^\]]+)\]/)?.[1] ?? '';
 const themes = new Set([...themeArray.matchAll(/['"]([^'"]+)['"]/g)].map((match) => match[1]));
 if (!themes.size) failures.push('THEME_IDS could not be parsed by the offline audit');
+const maxThemes = Number(themeSource.match(/MAX_THEMES\s*=\s*(\d+)/)?.[1] ?? 9);
+if (themes.size > maxThemes) failures.push(`THEME_IDS has ${themes.size} themes; the architecture ceiling is ${maxThemes} (use tags for finer classification)`);
 const postDir = path.join(src, 'content', 'posts');
 const posts = walk(postDir, (file) => file.endsWith('.md'));
 for (const file of posts) {
@@ -66,15 +68,17 @@ for (const file of posts) {
     continue;
   }
   const frontmatter = match[1];
-  for (const key of ['title:', 'description:', 'theme:', 'published:', 'universe:', 'offset:']) {
+  for (const key of ['title:', 'description:', 'theme:', 'published:']) {
     if (!frontmatter.includes(key)) failures.push(`${path.relative(root, file)} is missing ${key}`);
   }
   const theme = frontmatter.match(/^theme:\s*([^\s]+)\s*$/m)?.[1];
   if (!theme || !themes.has(theme)) failures.push(`${path.relative(root, file)} has invalid theme`);
-  const offset = frontmatter.match(/^\s*offset:\s*\[([^\]]+)\]\s*$/m)?.[1]
-    ?.split(',').map((value) => Number(value.trim()));
-  if (!offset || offset.length !== 3 || offset.some((value) => !Number.isFinite(value))) {
-    failures.push(`${path.relative(root, file)} has invalid universe.offset`);
+  if (frontmatter.includes('universe:')) {
+    const offset = frontmatter.match(/^\s*offset:\s*\[([^\]]+)\]\s*$/m)?.[1]
+      ?.split(',').map((value) => Number(value.trim()));
+    if (!offset || offset.length !== 3 || offset.some((value) => !Number.isFinite(value))) {
+      failures.push(`${path.relative(root, file)} has invalid universe.offset`);
+    }
   }
 }
 

@@ -43,7 +43,7 @@ The file is kept under an offline-enforced orchestration-size budget so simulati
 
 ## Content ownership
 
-`src/data/themes.ts` is the single source for topic IDs. `src/data/universe.ts` defines the topic galaxies. Markdown frontmatter is the sole source for article-visible metadata and the article's local galaxy offset.
+`src/data/themes.ts` is the single source for topic IDs and the `MAX_THEMES = 9` ceiling (enforced by the audit and core tests; one theme = one galaxy, readers track ~7±2). `src/data/universe.ts` defines the topic galaxies — `position` is optional; `core/galaxyLayout.ts` deterministically auto-places unpositioned galaxies on fixed layout rings with enforced pairwise separation, and auto-places article stars whose frontmatter omits `universe.offset`. Markdown frontmatter stays the sole source for article-visible metadata.
 
 `UniverseShell.astro` reads the content collection and constructs `ArticleStarDefinition[]`; there is no separate hard-coded article-star registry.
 

@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import type { NebulaDefinition } from '../../../data/universe';
+import type { ResolvedNebulaDefinition } from '../../../data/universe';
 import { buildGalaxyLayer, type GalaxyLayerKind } from '../generation/GalaxyDistribution';
 import { UNIVERSE_CONFIG } from '../core/config';
 import { clamp01 } from '../core/math';
@@ -12,7 +12,7 @@ interface NebulaLayer {
 }
 
 interface NebulaRuntime {
-  def: NebulaDefinition;
+  def: ResolvedNebulaDefinition;
   group: THREE.Group;
   structure: NebulaLayer;
   cloud: NebulaLayer;
@@ -24,7 +24,7 @@ export class NebulaSystem {
 
   constructor(
     scene: THREE.Scene,
-    definitions: NebulaDefinition[],
+    definitions: ResolvedNebulaDefinition[],
     pixelRatio: number,
     reducedMotion: boolean,
   ) {
@@ -131,7 +131,7 @@ export class NebulaSystem {
   }
 
   private createLayer(
-    definition: NebulaDefinition,
+    definition: ResolvedNebulaDefinition,
     kind: GalaxyLayerKind,
     count: number,
     pixelRatio: number,

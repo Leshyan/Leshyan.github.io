@@ -10,9 +10,10 @@ const posts = defineCollection({
     description: z.string(),
     theme: z.enum(THEME_IDS),
     published: z.coerce.date(),
+    // Optional: omitting universe.offset auto-places the article star deterministically.
     universe: z.object({
       offset: z.tuple([z.number(), z.number(), z.number()]),
-    }),
+    }).optional(),
   }),
 });
 

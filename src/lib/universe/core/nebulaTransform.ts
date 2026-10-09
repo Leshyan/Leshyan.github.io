@@ -1,8 +1,8 @@
 import * as THREE from 'three';
-import type { NebulaDefinition } from '../../../data/universe';
+import type { ResolvedNebulaDefinition } from '../../../data/universe';
 
 export const nebulaQuaternion = (
-  definition: NebulaDefinition,
+  definition: ResolvedNebulaDefinition,
   target = new THREE.Quaternion(),
 ) => {
   const [x, y, z] = definition.rotationDeg;
@@ -16,7 +16,7 @@ export const nebulaQuaternion = (
 };
 
 export const nebulaLocalToWorld = (
-  definition: NebulaDefinition,
+  definition: ResolvedNebulaDefinition,
   local: readonly [number, number, number],
   target = new THREE.Vector3(),
 ) => {

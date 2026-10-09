@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import type { ArticleStarDefinition, NebulaDefinition } from '../../data/universe';
+import type { ArticleStarDefinition, ResolvedNebulaDefinition } from '../../data/universe';
 import { UNIVERSE_CONFIG } from './core/config';
 import { clamp01, easeInOutCubic, smoothstep } from './core/math';
 import { UniverseStateMachine, type UniverseState } from './core/UniverseStateMachine';
@@ -16,7 +16,7 @@ export type UniverseRoute = 'home' | 'post';
 
 export interface UniverseContent {
   articleStars: ArticleStarDefinition[];
-  nebulae: NebulaDefinition[];
+  nebulae: ResolvedNebulaDefinition[];
 }
 
 export interface UniverseEngineOptions {

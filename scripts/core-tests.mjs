@@ -72,6 +72,7 @@ const graphFiles = [
   'src/data/universe.ts',
   'src/lib/universe/core/math.ts',
   'src/lib/universe/core/sampling.ts',
+  'src/lib/universe/core/galaxyLayout.ts',
   'src/lib/universe/generation/GalaxyDistribution.ts',
 ];
 
@@ -91,6 +92,7 @@ try {
   const galaxy = await import(pathToFileURL(path.join(tempRoot, 'src/lib/universe/generation/GalaxyDistribution.mjs')).href);
   const universe = await import(pathToFileURL(path.join(tempRoot, 'src/data/universe.mjs')).href);
   const themeModule = await import(pathToFileURL(path.join(tempRoot, 'src/data/themes.mjs')).href);
+  const galaxyLayout = await import(pathToFileURL(path.join(tempRoot, 'src/lib/universe/core/galaxyLayout.mjs')).href);
 
   const nebulaIds = universe.NEBULAE.map((definition) => definition.id);
   assert(new Set(nebulaIds).size === nebulaIds.length, 'nebula theme ids are duplicated');
@@ -99,6 +101,69 @@ try {
       && themeModule.THEME_IDS.every((theme) => nebulaIds.includes(theme)),
     'THEME_IDS and NEBULAE are not a one-to-one set',
   );
+
+  assert(
+    themeModule.THEME_IDS.length <= (themeModule.MAX_THEMES ?? 9),
+    `theme count ${themeModule.THEME_IDS.length} exceeds the architecture ceiling`,
+  );
+
+  const resolvedNebulae = galaxyLayout.resolveNebulaLayout(universe.NEBULAE);
+  assert(resolvedNebulae.every((d) => d.position?.length === 3), 'resolved layout missing concrete positions');
+  for (let i = 0; i < resolvedNebulae.length; i += 1) {
+    for (let j = i + 1; j < resolvedNebulae.length; j += 1) {
+      const a = resolvedNebulae[i];
+      const b = resolvedNebulae[j];
+      const distance = Math.hypot(a.position[0] - b.position[0], a.position[1] - b.position[1], a.position[2] - b.position[2]);
+      assert(
+        distance >= a.radius + b.radius + 4,
+        `galaxies ${a.id}/${b.id} overlap after layout resolution (${distance.toFixed(1)} < ${a.radius + b.radius + 4})`,
+      );
+    }
+  }
+
+  // Nine synthetic themes with no explicit positions must still resolve separated.
+  const synthetic = Array.from({ length: 9 }, (_, index) => ({
+    id: `t${index}`,
+    title: `T${index}`,
+    subtitle: '',
+    radius: 11,
+    arms: 3,
+    rotationDeg: [20, -15, 10],
+    hueA: [0.5, 0.5, 1],
+    hueB: [1, 0.5, 0.5],
+  }));
+  const syntheticResolved = galaxyLayout.resolveNebulaLayout(synthetic);
+  for (let i = 0; i < syntheticResolved.length; i += 1) {
+    for (let j = i + 1; j < syntheticResolved.length; j += 1) {
+      const a = syntheticResolved[i];
+      const b = syntheticResolved[j];
+      const distance = Math.hypot(a.position[0] - b.position[0], a.position[1] - b.position[1], a.position[2] - b.position[2]);
+      assert(distance >= a.radius + b.radius + 4, `synthetic galaxies ${i}/${j} overlap (${distance.toFixed(1)})`);
+    }
+  }
+
+  // Auto star offsets: deterministic, inside the disk, mutually spaced.
+  const autoA = galaxyLayout.autoArticleOffset('same-slug', 12.5, []);
+  const autoB = galaxyLayout.autoArticleOffset('same-slug', 12.5, []);
+  assert(autoA[0] === autoB[0] && autoA[1] === autoB[1] && autoA[2] === autoB[2], 'auto article offset is not deterministic');
+  const autoTaken = [];
+  for (let index = 0; index < 40; index += 1) {
+    const slot = galaxyLayout.autoArticleOffset(`auto-post-${index}`, 12.5, autoTaken);
+    assert(Math.hypot(slot[0], slot[1]) < 12.5 * 0.88, `auto slot ${index} escapes the galaxy disk`);
+    assert(Math.abs(slot[2]) < 12.5 * 0.1, `auto slot ${index} floats off the disk plane`);
+    autoTaken.push(slot);
+  }
+  let minAutoDistance = Infinity;
+  for (let i = 0; i < autoTaken.length; i += 1) {
+    for (let j = i + 1; j < autoTaken.length; j += 1) {
+      minAutoDistance = Math.min(minAutoDistance, Math.hypot(
+        autoTaken[i][0] - autoTaken[j][0],
+        autoTaken[i][1] - autoTaken[j][1],
+        autoTaken[i][2] - autoTaken[j][2],
+      ));
+    }
+  }
+  assert(minAutoDistance > 2.0, `auto star slots collide (min distance ${minAutoDistance.toFixed(2)})`);
 
   const diskRandom = math.createSeededRandom('circular-cover-test');
   let diskMeanX = 0;
@@ -169,10 +234,12 @@ try {
     const offset = source.match(/^\s*offset:\s*\[([^\]]+)\]\s*$/m)?.[1]
       ?.split(',').map((value) => Number(value.trim()));
     const definition = theme ? nebulaById.get(theme) : null;
-    assert(definition && offset?.length === 3, `${fileName} cannot be mapped into a nebula`);
-    const planarRadius = Math.hypot(offset[0], offset[1]);
-    assert(planarRadius < definition.radius * 0.88, `${fileName} article star lies outside its nebula disk`);
-    assert(Math.abs(offset[2]) < definition.radius * 0.10, `${fileName} article star floats implausibly far above its nebula disk`);
+    assert(definition, `${fileName} cannot be mapped into a nebula`);
+    if (offset?.length === 3) {
+      const planarRadius = Math.hypot(offset[0], offset[1]);
+      assert(planarRadius < definition.radius * 0.88, `${fileName} article star lies outside its nebula disk`);
+      assert(Math.abs(offset[2]) < definition.radius * 0.10, `${fileName} article star floats implausibly far above its nebula disk`);
+    }
   }
 } finally {
   fs.rmSync(tempRoot, { recursive: true, force: true });

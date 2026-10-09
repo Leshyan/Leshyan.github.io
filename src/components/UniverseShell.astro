@@ -2,16 +2,29 @@
 import { getCollection } from 'astro:content';
 import { NEBULAE, type ArticleStarDefinition } from '../data/universe';
 import { THEME_RGB } from '../data/themes';
+import { autoArticleOffset, resolveNebulaLayout } from '../lib/universe/core/galaxyLayout';
+
+const resolvedNebulae = resolveNebulaLayout(NEBULAE);
+const radiusByTheme = new Map(resolvedNebulae.map((nebula) => [nebula.id, nebula.radius]));
 
 const posts = (await getCollection('posts')).sort((a, b) => a.id.localeCompare(b.id));
-const articleStars: (ArticleStarDefinition & { published: Date })[] = posts.map((post) => ({
-  slug: post.id,
-  title: post.data.title,
-  subtitle: post.data.description,
-  theme: post.data.theme,
-  offset: post.data.universe.offset,
-  published: post.data.published,
-}));
+const takenOffsets = new Map<string, [number, number, number][]>();
+const articleStars: (ArticleStarDefinition & { published: Date })[] = posts.map((post) => {
+  const explicit = post.data.universe?.offset;
+  const radius = radiusByTheme.get(post.data.theme) ?? 12;
+  const taken = takenOffsets.get(post.data.theme) ?? [];
+  const offset = explicit ?? autoArticleOffset(post.id, radius, taken);
+  if (!takenOffsets.has(post.data.theme)) takenOffsets.set(post.data.theme, []);
+  takenOffsets.get(post.data.theme)!.push(offset);
+  return {
+    slug: post.id,
+    title: post.data.title,
+    subtitle: post.data.description,
+    theme: post.data.theme,
+    offset,
+    published: post.data.published,
+  };
+});
 
 const indexArticles = [...articleStars].sort((a, b) => b.published.getTime() - a.published.getTime());
 const hasCJK = (text: string) => /[\u3400-\u9fff\uf900-\ufaff\uff00-\uffef]/.test(text);
@@ -71,7 +84,7 @@ const legendThemes = NEBULAE.map((nebula) => ({
   <div id="universe-vignette" class="universe-vignette" aria-hidden="true"></div>
 </div>
 
-<script define:vars={{ articleStars, nebulae: NEBULAE }}>
+<script define:vars={{ articleStars, nebulae: resolvedNebulae }}>
   window.__NEBULA_CONTENT__ = { articleStars, nebulae };
 </script>
 
@@ -448,7 +461,16 @@ const legendThemes = NEBULAE.map((nebula) => ({
 
   @media (max-width: 720px) {
     .universe-index__scroll { padding: 78px 18px 54px; }
-    .universe-index__head { padding-left: 34px; gap: 10px 14px; }
+    .universe-index__head { padding-left: 34px; gap: 10px 0; }
+    .universe-index__legend {
+      flex: 1 1 100%;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      overscroll-behavior-x: contain;
+      scrollbar-width: none;
+      padding-bottom: 2px;
+    }
+    .universe-index__legend::-webkit-scrollbar { display: none; }
     .universe-index__card { grid-template-columns: 26px 1fr; padding-top: 16px; padding-bottom: 14px; }
     .universe-index__card::before { left: 4px; }
     .universe-index__card:first-of-type::before { top: 24px; }

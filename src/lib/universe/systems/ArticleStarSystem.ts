@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import type { ArticleStarDefinition, NebulaDefinition } from '../../../data/universe';
+import type { ArticleStarDefinition, ResolvedNebulaDefinition } from '../../../data/universe';
 import type { UniverseState } from '../core/UniverseStateMachine';
 import { UNIVERSE_CONFIG } from '../core/config';
 import { clamp01, smoothstep } from '../core/math';
@@ -14,7 +14,7 @@ export interface ArticleFocusResult {
 
 export interface ArticleStarRuntime {
   def: ArticleStarDefinition;
-  galaxy: NebulaDefinition;
+  galaxy: ResolvedNebulaDefinition;
   world: THREE.Vector3;
   group: THREE.Group;
   core: THREE.Mesh<THREE.SphereGeometry, THREE.MeshBasicMaterial>;
@@ -35,7 +35,7 @@ export class ArticleStarSystem {
   constructor(
     scene: THREE.Scene,
     articles: ArticleStarDefinition[],
-    nebulae: NebulaDefinition[],
+    nebulae: ResolvedNebulaDefinition[],
     glowTexture: THREE.Texture,
   ) {
     this.scene = scene;

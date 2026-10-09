@@ -1,3 +1,10 @@
+/**
+ * Hard ceiling on topic count. One topic = one galaxy; readers track roughly
+ * 7±2 of them. Finer classification belongs to tags, which need no galaxies.
+ * Enforced by the offline audit and core tests.
+ */
+export const MAX_THEMES = 9;
+
 export const THEME_IDS = ['research', 'engineering', 'notes', 'visual'] as const;
 
 export type ThemeId = (typeof THEME_IDS)[number];

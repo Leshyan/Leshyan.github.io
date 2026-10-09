@@ -92,3 +92,11 @@ At equal font-size, CJK glyphs nearly fill the em box while Georgia's Latin x-he
 ## v0.5.2 patch — uniform entry titles
 
 Removed the headline sizing rule (newest entry larger): all log entries now share one title size, differing only by the CJK 0.92 optical scale.
+
+## v0.6.0 — adaptive layout & the nine-theme ceiling
+
+- `MAX_THEMES = 9` exported from `themes.ts` and enforced by both the audit and core tests (one theme = one galaxy; ~7±2 is the readable limit — tags, not galaxies, should absorb finer classification).
+- Galaxy `position` is now optional: `core/galaxyLayout.ts` deterministically auto-places unpositioned galaxies on fixed layout rings with enforced pairwise separation (core tests check the real config and nine synthetic themes).
+- `universe.offset` is optional in article frontmatter: omitted stars are auto-placed by a deterministic hash sampler inside the galaxy disk, collision-aware against siblings (tested for determinism and 40-star density).
+- Existing four galaxies and all explicit offsets are unchanged — the deployed look is identical.
+- Index legend scrolls horizontally as a single row on mobile instead of wrapping.

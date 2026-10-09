@@ -111,6 +111,14 @@ Invisible groups are actually marked `visible = false`; setting shader opacity t
 
 CPU-mutated particle positions use `DynamicDrawUsage`. Galaxy vertex motion during formation happens in the shader. Frustum culling is disabled only while shader-space formation invalidates final CPU bounds and is restored once galaxies reach their final geometry.
 
+## Adaptive layout and the nine-theme ceiling
+
+Two scaling axes are deliberately made adaptive instead of hand-tuned, and one is capped:
+
+- **Galaxy placement** — explicit positions are honored for backward compatibility, but a theme may omit `position`; `galaxyLayout.ts` then slots it deterministically onto fixed camera-reachable rings, checking separation against every already-resolved galaxy. Core tests verify separation for both the real configuration and nine synthetic unpositioned themes, so adding a theme requires no manual spatial bookkeeping.
+- **Article stars** — `universe.offset` is optional in frontmatter; omitted stars are placed by a deterministic hash sampler inside the disk with collision retries, tested for determinism and 40-star density.
+- **Theme ceiling** — `MAX_THEMES = 9` is a hard architectural limit, not a suggestion. One theme is one galaxy and one legend entry; beyond ~9 the spatial metaphor stops informing navigation. Finer classification belongs to future tags, which are pure text and need no galaxies.
+
 ## Reduced motion
 
 Reduced-motion mode lowers particle counts and shortens transition durations. It preserves the spatial information architecture rather than merely disabling CSS animation.
