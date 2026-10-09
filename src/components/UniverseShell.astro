@@ -14,6 +14,10 @@ const articleStars: (ArticleStarDefinition & { published: Date })[] = posts.map(
 }));
 
 const indexArticles = [...articleStars].sort((a, b) => b.published.getTime() - a.published.getTime());
+const legendThemes = NEBULAE.map((nebula) => ({
+  title: nebula.title,
+  rgb: THEME_RGB[nebula.id],
+}));
 ---
 
 <div id="universe-shell" class="universe-shell" transition:persist="nebula-universe">
@@ -24,18 +28,25 @@ const indexArticles = [...articleStars].sort((a, b) => b.published.getTime() - a
   <nav id="universe-index" class="universe-index" aria-label="Article index">
     <div class="universe-index__scroll">
       <header class="universe-index__head">
-        <span>Articles</span>
-        <span>{indexArticles.length}</span>
+        <span class="universe-index__headtitle">Field Notes</span>
+        <span class="universe-index__legend">
+          {legendThemes.map((theme) => (
+            <span class="universe-index__legend-item" style={`--star: ${theme.rgb};`}>
+              <i></i>{theme.title}
+            </span>
+          ))}
+        </span>
       </header>
-      {indexArticles.map((article) => (
+      {indexArticles.map((article, index) => (
         <a
           class="universe-index__card"
           style={`--star: ${THEME_RGB[article.theme]};`}
           href={`/posts/${encodeURIComponent(article.slug)}`}
         >
-          <span class="universe-index__glyph" aria-hidden="true"></span>
+          <span class="universe-index__node" aria-hidden="true"></span>
           <span class="universe-index__body">
             <span class="universe-index__meta">
+              <span class="universe-index__no">{String(index + 1).padStart(2, '0')}</span>
               <span class="universe-index__theme">{article.theme}</span>
               <time class="universe-index__date" datetime={article.published.toISOString()}>
                 {article.published.toISOString().slice(0, 10)}
@@ -219,7 +230,7 @@ const indexArticles = [...articleStars].sort((a, b) => b.published.getTime() - a
     mix-blend-mode: screen;
   }
 
-  /* ── Article index (cosmos state) ─────────────────────────────── */
+  /* ── Article index (cosmos state): observational log over the raw nebula ── */
 
   .universe-index {
     position: fixed;
@@ -237,9 +248,6 @@ const indexArticles = [...articleStars].sort((a, b) => b.published.getTime() - a
   html[data-page-kind="home"][data-universe-state="cosmos"] .universe-index {
     visibility: visible;
     pointer-events: auto;
-    /* Enter via animation, not transition: the two-phase return commit swaps the
-       state attribute in one frame, and an entry animation replays reliably no
-       matter what computed style the node had on the previous frame. */
     animation: universe-index-in .55s cubic-bezier(.25,.7,.25,1) both;
   }
 
@@ -248,88 +256,166 @@ const indexArticles = [...articleStars].sort((a, b) => b.published.getTime() - a
     to { opacity: 1; transform: none; }
   }
 
+  /* Deepen the vignette while reading so type floats over the raw nebula. */
+  html[data-page-kind="home"][data-universe-state="cosmos"] .universe-vignette {
+    background: radial-gradient(circle at center, rgba(2,3,10,.42) 26%, rgba(0,0,8,.62) 62%, rgba(0,0,8,.85) 100%);
+  }
+
   .universe-index__scroll {
     min-height: 100%;
     display: flex;
     flex-direction: column;
-    gap: 12px;
     width: 100%;
-    max-width: 760px;
+    max-width: 920px;
     margin: 0 auto;
-    padding: 104px 24px 72px;
+    padding: 96px clamp(20px, 7vw, 84px) 72px;
   }
 
   .universe-index__head {
     margin-top: auto;
     display: flex;
-    justify-content: space-between;
     align-items: baseline;
-    padding: 0 22px 4px;
-    font-size: 10px;
-    letter-spacing: .3em;
+    justify-content: space-between;
+    gap: 18px;
+    flex-wrap: wrap;
+    padding: 0 0 18px 34px;
+    border-bottom: 1px solid rgba(233,239,255,.14);
+  }
+
+  .universe-index__headtitle {
+    font-size: 11px;
+    letter-spacing: .42em;
     text-transform: uppercase;
-    color: rgba(225,233,255,.4);
+    color: rgba(236,242,255,.72);
+  }
+
+  .universe-index__legend { display: flex; gap: 16px; flex-wrap: wrap; }
+  .universe-index__legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 9px;
+    letter-spacing: .22em;
+    color: rgba(225,233,255,.42);
+    --star: 154,182,255;
+  }
+  .universe-index__legend-item i {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: rgb(var(--star));
+    box-shadow: 0 0 8px 1px rgba(var(--star), .6);
   }
 
   .universe-index__card:last-of-type { margin-bottom: auto; }
 
+  /* Each entry: a log row hung on a shared constellation spine. */
   .universe-index__card {
     --star: 154,182,255;
-    display: flex;
-    gap: 16px;
-    align-items: flex-start;
-    padding: 17px 22px 15px;
-    border: 1px solid rgba(255,255,255,.08);
-    border-radius: 14px;
-    background: rgba(12,17,34,.42);
-    backdrop-filter: blur(14px) saturate(150%);
-    -webkit-backdrop-filter: blur(14px) saturate(150%);
+    position: relative;
+    display: grid;
+    grid-template-columns: 34px 1fr;
+    padding: 20px 10px 18px 0;
     text-decoration: none;
-    transition: border-color .25s ease, background .25s ease, transform .25s ease, box-shadow .25s ease;
   }
 
-  .universe-index__card:hover {
-    border-color: rgba(var(--star), .4);
-    background: rgba(17,23,44,.58);
-    transform: translateY(-2px);
-    box-shadow: 0 10px 34px -14px rgba(0,0,0,.65), 0 0 26px -8px rgba(var(--star), .3);
+  .universe-index__card::before {
+    /* spine segment */
+    content: '';
+    position: absolute;
+    left: 5px;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: rgba(233,239,255,.1);
   }
+  .universe-index__card:first-of-type::before { top: 28px; }
+  .universe-index__card:last-of-type::before { bottom: auto; height: 28px; }
 
-  .universe-index__glyph {
-    flex: none;
-    width: 9px;
-    height: 9px;
-    margin-top: 8px;
+  .universe-index__node {
+    position: absolute;
+    left: 0;
+    top: 25px;
+    width: 11px;
+    height: 11px;
     border-radius: 50%;
     background: rgb(var(--star));
-    box-shadow: 0 0 10px 2px rgba(var(--star), .55);
+    box-shadow: 0 0 12px 2px rgba(var(--star), .55);
+    transition: box-shadow .25s ease, transform .25s ease;
   }
 
-  .universe-index__body { display: block; min-width: 0; flex: 1; }
+  .universe-index__body { grid-column: 2; min-width: 0; transition: transform .3s cubic-bezier(.2,.8,.2,1); }
 
-  .universe-index__meta { display: flex; align-items: baseline; gap: 14px; margin-bottom: 6px; }
+  .universe-index__meta {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 7px;
+  }
+
+  .universe-index__no {
+    font-size: 10px;
+    letter-spacing: .18em;
+    color: rgba(225,233,255,.26);
+    font-variant-numeric: tabular-nums;
+  }
 
   .universe-index__theme {
     font-size: 9px;
     letter-spacing: .26em;
     text-transform: uppercase;
-    color: rgba(var(--star), .92);
+    color: rgba(var(--star), .9);
   }
 
   .universe-index__date {
     margin-left: auto;
     font-size: 10px;
-    letter-spacing: .1em;
-    color: rgba(222,229,247,.35);
+    letter-spacing: .12em;
+    color: rgba(222,229,247,.34);
+    font-variant-numeric: tabular-nums;
   }
 
   .universe-index__name {
     display: block;
-    font: 400 clamp(18px, 1.7vw, 22px)/1.35 Georgia, 'Times New Roman', 'Noto Serif SC', 'Source Han Serif SC', SimSun, serif;
-    color: rgba(248,250,255,.95);
+    font: 400 clamp(20px, 2.1vw, 27px)/1.32 Georgia, 'Times New Roman', 'Noto Serif SC', 'Source Han Serif SC', SimSun, serif;
+    letter-spacing: .01em;
+    color: rgba(246,248,255,.94);
+    text-shadow: 0 1px 18px rgba(0,0,6,.8);
+    transition: color .25s ease;
   }
 
-  .universe-index__desc { display: block; margin-top: 6px; font-size: 12.5px; line-height: 1.65; color: rgba(226,233,247,.55); }
+  .universe-index__desc {
+    display: block;
+    margin-top: 7px;
+    font-size: 12.5px;
+    line-height: 1.7;
+    color: rgba(224,231,246,.5);
+    max-width: 62ch;
+    text-shadow: 0 1px 14px rgba(0,0,6,.8);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Newest entry is the headline of the log. */
+  .universe-index__card:first-of-type .universe-index__name {
+    font-size: clamp(28px, 3.4vw, 42px);
+    line-height: 1.18;
+  }
+  .universe-index__card:first-of-type .universe-index__desc { color: rgba(228,234,248,.62); }
+  .universe-index__card:first-of-type .universe-index__node {
+    width: 14px;
+    height: 14px;
+    left: -1.5px;
+  }
+
+  .universe-index__card:hover .universe-index__name { color: #fff; }
+  .universe-index__card:hover .universe-index__body { transform: translateX(9px); }
+  .universe-index__card:hover .universe-index__node {
+    box-shadow: 0 0 20px 5px rgba(var(--star), .8);
+    transform: scale(1.25);
+  }
 
   .universe-fallback {
     position: fixed;
@@ -366,13 +452,15 @@ const indexArticles = [...articleStars].sort((a, b) => b.published.getTime() - a
   }
 
   @media (max-width: 720px) {
-    .universe-index__scroll { padding: 84px 16px 56px; }
-    .universe-index__card {
-      padding: 15px 16px 13px;
-      backdrop-filter: blur(10px) saturate(150%);
-      -webkit-backdrop-filter: blur(10px) saturate(150%);
-    }
-    .universe-index__head { padding: 0 16px 4px; }
+    .universe-index__scroll { padding: 78px 18px 54px; }
+    .universe-index__head { padding-left: 34px; gap: 10px 14px; }
+    .universe-index__card { grid-template-columns: 26px 1fr; padding-top: 16px; padding-bottom: 14px; }
+    .universe-index__card::before { left: 4px; }
+    .universe-index__card:first-of-type::before { top: 24px; }
+    .universe-index__card:last-of-type::before { height: 24px; }
+    .universe-index__node { top: 21px; }
+    .universe-index__date { display: none; }
+    .universe-index__desc { -webkit-line-clamp: 2; }
   }
 
   @media (prefers-reduced-motion: reduce) {

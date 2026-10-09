@@ -71,3 +71,13 @@ Entering an article snapped all sibling stars to a hard 0.055 dim exactly as the
 - The selected star now shrinks into the blast origin as it dissolves (scale follows integrity), so its disappearance reads as being drawn into the explosion.
 - Siblings in focus mode keep a soft distance-aware glimmer (0.025..0.185 by proximity) instead of a flat hard dim.
 - Ambient brightness of article stars now scales with `min(1, 6/count)`: a galaxy holding 60 articles glows like one holding 6, so a growing article count cannot wash out the index view.
+
+## v0.5.0 — the log index
+
+The glass-card column read as generic (uniform panels, dot+title+desc template, backdrop blur hiding the nebula). The index is redesigned as an observational log:
+
+- no boxes, no blur: entries are typographic log rows over the raw nebula, readability kept by a deepened vignette and text shadows;
+- a constellation spine on the left carries one theme-colored star node per entry; hover brightens the node and slides the row;
+- header "Field Notes" plus a four-theme color legend restores the theme grouping lost with the flat list;
+- entries numbered 01.. newest-first; the newest entry is headline-sized, descriptions clamp to two lines;
+- mobile: same spine, dates collapsed, legend wrapped.
